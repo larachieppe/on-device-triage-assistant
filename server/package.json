@@ -1,0 +1,19 @@
+{
+  "name": "triage-fallback-server",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "Server-side Claude fallback proxy for the on-device triage assistant.",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.110.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1"
+  }
+}

@@ -1,0 +1,21 @@
+# ML
+ml/runs/
+ml/export/
+ml/__pycache__/
+ml/**/__pycache__/
+ml/venv/
+*.pyc
+
+# Server
+server/node_modules/
+server/.env
+
+# Mobile (Expo/RN)
+mobile/node_modules/
+mobile/.expo/
+mobile/ios/
+mobile/android/
+mobile/*.log
+
+# OS
+.DS_Store
