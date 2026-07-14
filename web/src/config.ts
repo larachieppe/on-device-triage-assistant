@@ -13,4 +13,8 @@ export const CONFIDENCE_THRESHOLD = 0.75;
 // mistake this app can make.
 export const ALWAYS_VERIFY_LABELS = ["emergency"];
 
-export const FALLBACK_SERVER_URL = import.meta.env.VITE_TRIAGE_SERVER_URL || "http://localhost:8787";
+// Unset (rather than defaulting to localhost) on purpose: the public GitHub
+// Pages build has no fallback server behind it, and hitting a visitor's own
+// localhost:8787 would just fail silently. Set this at build time (e.g. in
+// web/.env, or when running `npm run dev` locally) to enable the LLM fallback.
+export const FALLBACK_SERVER_URL: string | undefined = import.meta.env.VITE_TRIAGE_SERVER_URL;

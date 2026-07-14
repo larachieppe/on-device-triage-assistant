@@ -8,6 +8,14 @@
   </head>
   <body>
     <div id="root"></div>
+    <!--
+      Loaded from a CDN rather than imported as an npm dependency: bundling
+      onnxruntime-web pulls its ~27MB WASM binary into the Vite build as a
+      static asset even though we only ever need it fetched at runtime (see
+      ort.env.wasm.wasmPaths in src/ml/onnxClassifier.ts). This keeps it out
+      of the deployed bundle entirely.
+    -->
+    <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.27.0/dist/ort.min.js"></script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

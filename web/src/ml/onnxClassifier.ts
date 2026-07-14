@@ -1,11 +1,14 @@
-import * as ort from "onnxruntime-web";
+// Type-only: the actual runtime comes from the CDN <script> tag in
+// index.html (see its comment for why), which sets window.ort. A normal
+// `import * as ort` would make Vite bundle onnxruntime-web's ~27MB WASM
+// binary into the build regardless of that CDN override.
+import type * as OrtNamespace from "onnxruntime-web";
 
 import { ONNXRUNTIME_WEB_VERSION } from "../config";
 import { type TokenizerMeta, WordpieceTokenizer } from "./wordpieceTokenizer";
 
-// Loading WASM binaries from a CDN sidesteps bundler-specific config for
-// onnxruntime-web's binary assets — fine for a demo, but a production app
-// would self-host these for offline/CSP reasons.
+const ort = (globalThis as unknown as { ort: typeof OrtNamespace }).ort;
+
 ort.env.wasm.wasmPaths = `https://cdn.jsdelivr.net/npm/onnxruntime-web@${ONNXRUNTIME_WEB_VERSION}/dist/`;
 
 export interface ClassificationResult {
@@ -30,7 +33,7 @@ interface ModelBundle {
 
 class OnDeviceClassifier {
   private bundlePromise: Promise<ModelBundle> | null = null;
-  private sessionPromise: Promise<ort.InferenceSession> | null = null;
+  private sessionPromise: Promise<OrtNamespace.InferenceSession> | null = null;
 
   private async getBundle(): Promise<ModelBundle> {
     if (!this.bundlePromise) {
@@ -45,7 +48,7 @@ class OnDeviceClassifier {
     return this.bundlePromise;
   }
 
-  private async getSession(): Promise<ort.InferenceSession> {
+  private async getSession(): Promise<OrtNamespace.InferenceSession> {
     if (!this.sessionPromise) {
       this.sessionPromise = ort.InferenceSession.create("/model/model.quant.onnx", {
         executionProviders: ["wasm"],
@@ -73,7 +76,7 @@ class OnDeviceClassifier {
     const { inputIds, attentionMask, tokenTypeIds } = tokenizer.encode(text);
     const seqLen = inputIds.length;
 
-    const feeds: Record<string, ort.Tensor> = {
+    const feeds: Record<string, OrtNamespace.Tensor> = {
       input_ids: new ort.Tensor("int64", inputIds, [1, seqLen]),
       attention_mask: new ort.Tensor("int64", attentionMask, [1, seqLen]),
       token_type_ids: new ort.Tensor("int64", tokenTypeIds, [1, seqLen]),

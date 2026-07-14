@@ -93,6 +93,14 @@ export default function App() {
               </span>
             )}
           </div>
+          {result.fallbackUnavailable && (
+            <p className="fallback-note">
+              Confidence was below the threshold for a trustworthy on-device answer, and this
+              public demo has no LLM fallback server behind it — the result above is the raw
+              on-device guess. Run <code>server/</code> locally and set{" "}
+              <code>VITE_TRIAGE_SERVER_URL</code> to see the full routing behavior.
+            </p>
+          )}
         </div>
       )}
     </div>

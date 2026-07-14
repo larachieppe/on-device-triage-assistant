@@ -1,5 +1,5 @@
 import { onDeviceClassifier } from "../ml/onnxClassifier";
-import { ALWAYS_VERIFY_LABELS, CONFIDENCE_THRESHOLD } from "../config";
+import { ALWAYS_VERIFY_LABELS, CONFIDENCE_THRESHOLD, FALLBACK_SERVER_URL } from "../config";
 import type { TriageResult } from "../types";
 import { classifyWithLlmFallback } from "./fallbackClient";
 
@@ -19,6 +19,16 @@ export async function triage(text: string): Promise<TriageResult> {
       confidence: onDeviceResult.confidence,
       source: "on_device",
       latencyMs: onDeviceResult.latencyMs,
+    };
+  }
+
+  if (!FALLBACK_SERVER_URL) {
+    return {
+      label: onDeviceResult.label,
+      confidence: onDeviceResult.confidence,
+      source: "on_device",
+      latencyMs: onDeviceResult.latencyMs,
+      fallbackUnavailable: true,
     };
   }
 
