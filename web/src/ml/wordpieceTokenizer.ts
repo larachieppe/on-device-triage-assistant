@@ -1,8 +1,8 @@
 // Minimal BERT-style WordPiece tokenizer, implemented from scratch so the
-// mobile app doesn't need a full JS ML runtime just to tokenize text —
-// onnxruntime-react-native only runs the model graph, it does no NLP
-// preprocessing, so this has to happen on the JS side using the same vocab
-// the Python tokenizer used at training time.
+// app doesn't need a full JS ML runtime just to tokenize text —
+// onnxruntime-web only runs the model graph, it does no NLP preprocessing,
+// so this has to happen on the JS side using the same vocab the Python
+// tokenizer used at training time.
 //
 // This intentionally does not handle CJK character segmentation or accent
 // stripping (the training data is English-only symptom descriptions).

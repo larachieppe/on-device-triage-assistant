@@ -1,23 +1,54 @@
-// Thin proxy that holds the Anthropic API key server-side. The mobile app
+// Thin proxy that holds the Anthropic API key server-side. The web app
 // never talks to Claude directly — it only calls this server, which is the
-// whole point: an API key bundled into a mobile app is trivially extractable
-// from the compiled binary, so the fallback call has to happen behind a
-// service boundary.
+// whole point: an API key bundled into a client-side app is trivially
+// extractable, so the fallback call has to happen behind a service boundary.
+//
+// This is deployed publicly (see ../render.yaml), so unlike a local-only
+// dev server, an open /triage/fallback endpoint is a real cost-abuse risk —
+// anyone who finds the URL could otherwise run up the Anthropic bill. The
+// two limiters below are the mitigation: a per-IP rate limit, and a
+// process-lifetime request budget as a hard ceiling regardless of how
+// requests are distributed across IPs. Neither is a substitute for auth on
+// a real product — see docs/ARCHITECTURE.md.
 
 require("dotenv").config({ quiet: true });
 const express = require("express");
 const cors = require("cors");
+const rateLimit = require("express-rate-limit");
 const Anthropic = require("@anthropic-ai/sdk");
 
 const LABELS = ["self_care", "routine_care", "urgent_care", "emergency"];
 const MODEL = process.env.ANTHROPIC_MODEL || "claude-sonnet-5";
 const MAX_TEXT_LENGTH = 1000;
+const GLOBAL_REQUEST_BUDGET = Number(process.env.GLOBAL_REQUEST_BUDGET || 300);
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 const app = express();
-app.use(cors());
+app.set("trust proxy", 1); // Render sits behind a proxy; needed for correct per-IP limiting
+// Open (any origin) unless ALLOWED_ORIGIN is set, so local dev keeps working
+// out of the box. render.yaml sets it to the deployed web service's origin.
+app.use(cors(process.env.ALLOWED_ORIGIN ? { origin: process.env.ALLOWED_ORIGIN } : undefined));
 app.use(express.json());
+
+const fallbackLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  limit: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many requests — try again in a few minutes." },
+});
+
+let globalRequestCount = 0;
+function globalBudgetGuard(_req, res, next) {
+  if (globalRequestCount >= GLOBAL_REQUEST_BUDGET) {
+    return res.status(503).json({
+      error: "This demo's LLM fallback budget is exhausted for now. Try again later.",
+    });
+  }
+  globalRequestCount += 1;
+  next();
+}
 
 const SYSTEM_PROMPT = `You are the fallback triage step in a symptom-triage app. A small on-device \
 model already tried to classify the user's message and was not confident enough, so you are being \
@@ -55,7 +86,7 @@ const TRIAGE_TOOL = {
 
 app.get("/health", (_req, res) => res.json({ ok: true, model: MODEL }));
 
-app.post("/triage/fallback", async (req, res) => {
+app.post("/triage/fallback", fallbackLimiter, globalBudgetGuard, async (req, res) => {
   const { text, onDeviceLabel, onDeviceConfidence } = req.body || {};
 
   if (typeof text !== "string" || !text.trim()) {

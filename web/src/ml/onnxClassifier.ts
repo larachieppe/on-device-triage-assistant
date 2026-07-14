@@ -11,13 +11,6 @@ const ort = (globalThis as unknown as { ort: typeof OrtNamespace }).ort;
 
 ort.env.wasm.wasmPaths = `https://cdn.jsdelivr.net/npm/onnxruntime-web@${ONNXRUNTIME_WEB_VERSION}/dist/`;
 
-// import.meta.env.BASE_URL, not a hardcoded "/", because the production
-// build is served from a GitHub Pages project subpath
-// (/on-device-triage-assistant/) rather than the domain root — see
-// vite.config.ts. A literal "/model/..." string here would resolve against
-// the site root and 404 in production while working fine in local dev.
-const MODEL_BASE = import.meta.env.BASE_URL;
-
 export interface ClassificationResult {
   label: string;
   confidence: number;
@@ -46,8 +39,8 @@ class OnDeviceClassifier {
     if (!this.bundlePromise) {
       this.bundlePromise = (async () => {
         const [vocab, meta] = await Promise.all([
-          fetch(`${MODEL_BASE}model/vocab.json`).then((r) => r.json()),
-          fetch(`${MODEL_BASE}model/tokenizer_meta.json`).then((r) => r.json()) as Promise<TokenizerMeta>,
+          fetch("/model/vocab.json").then((r) => r.json()),
+          fetch("/model/tokenizer_meta.json").then((r) => r.json()) as Promise<TokenizerMeta>,
         ]);
         return { tokenizer: new WordpieceTokenizer(vocab, meta), meta };
       })();
@@ -57,7 +50,7 @@ class OnDeviceClassifier {
 
   private async getSession(): Promise<OrtNamespace.InferenceSession> {
     if (!this.sessionPromise) {
-      this.sessionPromise = ort.InferenceSession.create(`${MODEL_BASE}model/model.quant.onnx`, {
+      this.sessionPromise = ort.InferenceSession.create("/model/model.quant.onnx", {
         executionProviders: ["wasm"],
       });
     }

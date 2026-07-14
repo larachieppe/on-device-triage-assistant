@@ -10,7 +10,7 @@ LABELS = [
 LABEL_TO_ID = {label: i for i, label in enumerate(LABELS)}
 ID_TO_LABEL = {i: label for label, i in LABEL_TO_ID.items()}
 
-# Shown in the mobile UI and used to gate the LLM fallback for emergency cases
+# Shown in the UI and used to gate the LLM fallback for emergency cases
 LABEL_DESCRIPTIONS = {
     "self_care": "Likely manageable at home with rest, fluids, or OTC remedies.",
     "routine_care": "Worth a routine doctor's visit, not time-critical.",

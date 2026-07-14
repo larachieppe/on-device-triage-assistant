@@ -1,6 +1,6 @@
 """Evaluates the fine-tuned model on the validation set and prints a per-class
 report plus a confidence histogram — used to pick the on-device confidence
-threshold that decides when the mobile app falls back to the LLM.
+threshold that decides when the app falls back to the LLM.
 
 Usage:
     python eval.py --model-dir runs/mobilebert-triage/final
@@ -65,7 +65,7 @@ def main():
 
     print(
         "\nPick a fallback threshold where accuracy below it drops noticeably — "
-        "that's the confidence cutoff to use in mobile/src/services/triageRouter.ts"
+        "that's the confidence cutoff to use in web/src/services/triageRouter.ts"
     )
 
 

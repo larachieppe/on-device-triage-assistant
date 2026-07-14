@@ -13,13 +13,14 @@ per request. The naive options are both bad:
   network latency and API cost, and the app stops working offline.
 
 This project routes between them based on the on-device model's own
-confidence (`mobile/src/services/triageRouter.ts`):
+confidence (`web/src/services/triageRouter.ts`):
 
 1. Run the on-device model. It returns a label and a softmax confidence.
 2. If confidence is above `CONFIDENCE_THRESHOLD`, trust it and return
    immediately — no network call.
-3. Otherwise (or if the label is in `ALWAYS_VERIFY_LABELS`), call the server
-   fallback and use the LLM's answer instead.
+3. Otherwise (or if the label is in `ALWAYS_VERIFY_LABELS`), don't call the
+   LLM yet — ask a few clarifying questions first (see below), then call the
+   server fallback with the enriched description and use the LLM's answer.
 
 The threshold isn't picked arbitrarily — `ml/eval.py` buckets validation
 examples by confidence and reports accuracy per bucket, so the threshold is
@@ -82,6 +83,29 @@ softmax confidence — is out of scope here, but "confidence thresholds need
 calibration data to mean anything" is the actual lesson this project
 surfaces, and it only showed up once a harder eval set existed.
 
+## Why clarifying questions instead of an instant verdict
+
+Early versions of this app showed a result the instant the on-device model
+finished — including, for a single vague sentence like "I have a headache
+and am feeling dizzy," an immediate **Emergency** verdict. That's not how an
+actual triage assistant behaves (a nurse line asks follow-ups before
+escalating), and it's a worse product besides: it reads as jumping to
+conclusions on too little information.
+
+`web/src/clarify.ts` + the `clarifying` phase in `App.tsx` insert a short
+step between "on-device model is unsure or leans emergency" and "show a
+result": three fixed questions (duration, severity, a red-flag check for
+trouble breathing/chest pain/confusion/heavy bleeding). A "yes" on the
+red-flag question hard-routes to emergency through a deterministic rule that
+bypasses the model entirely — that check should never depend on classifier
+confidence. Otherwise, the answers get folded back into the original text
+and re-run through the *same* on-device/LLM pipeline with more context.
+
+No new model or scoring logic was needed — more signal into the same
+classifier was enough on its own to flip confidently-wrong guesses. The
+headache-and-dizzy example above goes from an Emergency first guess to Self
+care at 97% confidence once duration and severity are known.
+
 ## Why MobileBERT instead of DistilBERT
 
 `ml/train.py` fine-tunes `google/mobilebert-uncased` (~25M params) rather
@@ -90,14 +114,27 @@ MobileBERT is itself a distillation target built for on-device inference —
 using it, then quantizing to int8 on top, compounds the size/latency
 reduction instead of just picking "the smaller of two BERT variants."
 
-## Why the LLM call goes through a server, not directly from the app
+## Why the LLM call goes through a server, not directly from the browser
 
-An API key embedded in a mobile app bundle can be extracted from the
-compiled binary — it is not a secret once it ships. `server/index.js` is a
-thin Express proxy that holds `ANTHROPIC_API_KEY` and is the only thing that
-talks to Claude. The mobile app only ever calls the proxy's
-`/triage/fallback` endpoint. This also gives a single place to add rate
-limiting, logging, and cost controls if this were a real product.
+An API key embedded in client-side JavaScript can be read out of the bundle
+by anyone — it is not a secret once it ships, regardless of how it's
+minified. `server/index.js` is a thin Express proxy that holds
+`ANTHROPIC_API_KEY` and is the only thing that talks to Claude. The web app
+only ever calls the proxy's `/triage/fallback` endpoint.
+
+This is deployed as two separate Render services (`render.yaml`) rather than
+one, specifically so the server can hold a secret the static site can't:
+Render's static-site product has no server-side runtime to keep an API key
+in, which is exactly why a static-only deploy (this project's first
+iteration, on GitHub Pages) could only ever ship the on-device half of the
+story. Splitting into a static site + a web service is what makes the full
+routing behavior demonstrable publicly, not just in local dev.
+
+Now that the server is genuinely public instead of a local dev convenience,
+`server/index.js` also carries a per-IP rate limit and a process-lifetime
+request budget (`GLOBAL_REQUEST_BUDGET`) as cost-abuse mitigations. Neither
+is a substitute for real auth on an actual product — see "What's
+intentionally out of scope" below.
 
 ## Why `emergency` always gets verified
 
@@ -116,5 +153,12 @@ logic, not just a threshold.
 - **On-device LLM fallback (e.g. via llama.cpp).** Deliberately left out to
   keep the cost/latency contrast between "small classifier" and "hosted LLM"
   clean and easy to talk about.
-- **Auth / rate limiting on the server.** The proxy is a demonstration of
-  the *pattern* (key stays server-side), not a production-hardened service.
+- **Real auth on the server.** The rate limit and request budget stop casual
+  abuse, not a determined attacker — there's no API key or account system
+  gating `/triage/fallback`, which a real product would need.
+- **A native mobile app.** An earlier version of this project shipped a
+  React Native / ONNX Runtime Mobile app alongside the browser demo. It was
+  dropped to keep one client instead of two drifting in and out of sync —
+  the interesting parts (on-device inference, the routing decision, the
+  clarifying-questions flow) are just as demonstrable in a browser, without
+  needing a device or simulator to show anyone.

@@ -10,13 +10,6 @@ ml/venv/
 server/node_modules/
 server/.env
 
-# Mobile (Expo/RN)
-mobile/node_modules/
-mobile/.expo/
-mobile/ios/
-mobile/android/
-mobile/*.log
-
 # Web
 web/node_modules/
 web/dist/

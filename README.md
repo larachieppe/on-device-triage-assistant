@@ -1,14 +1,12 @@
 # On-Device Triage Assistant
 
-**Live demo:** https://larachieppe.github.io/on-device-triage-assistant/
-(on-device classification only — the LLM fallback needs `server/` running
-locally, see [Setup](#setup))
+**Live demo:** _deploying to Render — see [Deploying to Render](#deploying-to-render)._
 
-A symptom-triage classifier that runs **entirely on-device** via a small,
-distilled transformer exported to ONNX — with a server-side Claude call as a
-fallback for cases the on-device model isn't confident about. Ships as both
-a React Native app (ONNX Runtime Mobile) and a browser demo (onnxruntime-web)
-that share the same model, tokenizer logic, and routing decision.
+A symptom-triage classifier that runs **entirely on-device in the browser**
+via a small, distilled transformer exported to ONNX and run with
+onnxruntime-web — with a server-side Claude call as a fallback for cases the
+on-device model isn't confident about, and a short clarifying-questions step
+before it ever shows a high-stakes or uncertain verdict.
 
 **Portfolio demo, not a medical product.** Training data is synthetic and
 templated (see `ml/data/generate_synthetic_data.py`); labels are not
@@ -22,20 +20,23 @@ the medical accuracy of the classifier.
 - Demonstrates a concrete cost/latency tradeoff: on-device inference is free
   and near-instant, but a distilled model will be wrong or unsure sometimes —
   the routing logic decides when it's worth paying for an LLM call instead.
-- Keeps the LLM API key server-side instead of bundling it into the mobile
-  app, which is how this would actually have to work in production.
+- Keeps the LLM API key server-side instead of bundling it into the client,
+  which is how this would actually have to work in production.
+- Asks before it escalates: a low-confidence or emergency-leaning first
+  guess triggers a few clarifying questions rather than an immediate verdict
+  — see `web/src/clarify.ts`.
 
 ## Architecture
 
 ```
 ┌─────────────┐      confident enough       ┌──────────────────┐
-│  Mobile app │ ───────────────────────────▶│  Show result      │
-│             │                              └──────────────────┘
+│  Browser    │ ───────────────────────────▶│  Show result      │
+│  (web/)     │                              └──────────────────┘
 │  1. type    │
 │     symptom │      low confidence /        ┌──────────────────┐
-│  2. run     │      always-verify label     │  server/          │
-│     ONNX    │ ───────────────────────────▶ │  Express proxy    │
-│     model   │                               │  → Claude API     │
+│  2. run     │      emergency-leaning        │  server/          │
+│     ONNX    │ ──▶ ask clarifying Qs ──────▶ │  Express proxy    │
+│     model   │      (or hard safety rule)    │  → Claude API     │
 │     locally │ ◀─────────────────────────── │  (holds API key)  │
 └─────────────┘         triage result         └──────────────────┘
 ```
@@ -45,8 +46,8 @@ the medical accuracy of the classifier.
 ```
 ml/       Python: synthetic data generation, fine-tuning, ONNX export/quantization
 server/   Node/Express proxy that calls Claude for the fallback path (keeps the API key off-device)
-mobile/   Expo React Native app (onnxruntime-react-native + a hand-rolled WordPiece tokenizer)
-web/      Vite/React browser demo (onnxruntime-web) — same tokenizer/routing logic, no native build needed
+web/      Vite/React browser app (onnxruntime-web) — the only client
+render.yaml   Render Blueprint that deploys both server/ and web/
 ```
 
 ## Setup
@@ -61,7 +62,7 @@ pip install -r requirements.txt
 python data/generate_synthetic_data.py --n-per-label 800
 python data/hard_eval_set.py   # hand-written, non-templated — see below
 python train.py --epochs 4
-python export_onnx.py          # quantizes to int8 and copies into mobile/assets/model/
+python export_onnx.py          # quantizes to int8 and copies into web/public/model/
 
 python eval.py                                       # sanity check only — the templated
                                                        # val set hits 100% and is not a
@@ -69,7 +70,7 @@ python eval.py                                       # sanity check only — the
 python eval.py --val-csv data/hard_eval_set.csv       # the real signal for CONFIDENCE_THRESHOLD
 ```
 
-Until you run `export_onnx.py`, `mobile/assets/model/` contains placeholder
+Until you run `export_onnx.py`, `web/public/model/` contains placeholder
 files so the app still builds — the classifier will throw a clear error if
 you try to use it before a real model is exported.
 
@@ -82,9 +83,7 @@ npm install
 npm start               # http://localhost:8787
 ```
 
-### 3. Try the browser demo (fastest way to test)
-
-No native build needed — this runs the same model via WebAssembly.
+### 3. Run the web app
 
 ```bash
 cd web
@@ -95,38 +94,42 @@ npm run dev   # http://localhost:5173
 If the fallback server isn't on `localhost:8787`, set `VITE_TRIAGE_SERVER_URL`
 before starting (e.g. in `web/.env`).
 
-### 4. Run the mobile app
+## Deploying to Render
 
-`onnxruntime-react-native` is a native module, so this **will not run in
-Expo Go** — it needs a custom dev client build.
+`render.yaml` is a [Render Blueprint](https://render.com/docs/blueprint-spec)
+that deploys both services in one shot:
 
-```bash
-cd mobile
-npm install
-npx expo prebuild
-npx expo run:ios      # or: npx expo run:android
-```
+1. Push this repo to GitHub (already done if you're reading this from the repo).
+2. In the Render dashboard: **New +** → **Blueprint** → select this repo.
+   Render reads `render.yaml` automatically and provisions both services.
+3. Render will prompt for `ANTHROPIC_API_KEY` on the server service (it's
+   marked `sync: false` in the Blueprint specifically so it's never written
+   to git) — paste your key there.
+4. Wait for both builds to finish. The web service's build embeds the
+   server's URL into the bundle via `VITE_TRIAGE_SERVER_URL`.
 
-If testing on a physical device, set `EXPO_PUBLIC_TRIAGE_SERVER_URL` to your
-machine's LAN IP (not `localhost`) before starting the app, e.g.:
+If either service name in `render.yaml` was already taken on your account,
+Render assigned it a different subdomain than the Blueprint assumed, and the
+two services won't find each other. Fix: open the affected service's
+**Environment** tab, correct the URL by hand, and trigger a manual redeploy.
 
-```bash
-EXPO_PUBLIC_TRIAGE_SERVER_URL=http://192.168.1.23:8787 npx expo start
-```
-
-No local Xcode/Android Studio? Use [EAS Build](https://docs.expo.dev/build/introduction/)
-(`npx eas build --profile development --platform ios`) to build a dev client
-in the cloud and install it on a physical device instead.
+The server has two abuse-mitigations baked in since it's genuinely public
+now, not just a local dev convenience — see the comments in `server/index.js`:
+a per-IP rate limit and a process-lifetime request budget
+(`GLOBAL_REQUEST_BUDGET`, resets on redeploy). Neither is a substitute for
+real auth on an actual product.
 
 ## Tuning the tradeoff
 
-Both `mobile/src/config.ts` and `web/src/config.ts` have the two knobs that
-define the cost/latency tradeoff this project is built around:
+`web/src/config.ts` has the knobs that define the cost/latency tradeoff this
+project is built around:
 
-- `CONFIDENCE_THRESHOLD` — below this, fall back to the LLM.
+- `CONFIDENCE_THRESHOLD` — below this, ask clarifying questions / fall back
+  to the LLM instead of trusting the on-device guess outright.
 - `ALWAYS_VERIFY_LABELS` — labels that always get double-checked regardless
   of confidence (defaults to `emergency`, since a false negative there is the
   worst failure mode).
 
 See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the fuller writeup of
-these decisions.
+these decisions, including why the confidence threshold is 0.95 and not a
+more conventional-looking number.

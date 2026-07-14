@@ -1,8 +1,5 @@
-"""Exports the fine-tuned MobileBERT classifier to ONNX and quantizes it for mobile.
-
-Produces three artifacts, copied into both mobile/assets/model/ and
-web/public/model/ so the RN app and the browser demo always run the same
-model without needing to be exported separately:
+"""Exports the fine-tuned MobileBERT classifier to ONNX and quantizes it,
+copying the result into web/public/model/ for the browser demo:
     - model.quant.onnx   (dynamically int8-quantized, what the app actually loads)
     - vocab.json          (token -> id map, for the JS-side WordPiece tokenizer)
     - tokenizer_meta.json (max_length, special token ids, label order)
@@ -23,10 +20,7 @@ from transformers import AutoTokenizer
 from labels import ID_TO_LABEL, LABELS
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-ASSET_DIRS = [
-    PROJECT_ROOT / "mobile" / "assets" / "model",
-    PROJECT_ROOT / "web" / "public" / "model",
-]
+WEB_ASSETS_DIR = PROJECT_ROOT / "web" / "public" / "model"
 
 
 def main():
@@ -34,9 +28,7 @@ def main():
     parser.add_argument("--model-dir", default="runs/mobilebert-triage/final")
     parser.add_argument("--export-dir", default="export")
     parser.add_argument("--max-length", type=int, default=64)
-    parser.add_argument(
-        "--skip-copy", action="store_true", help="don't copy into mobile/assets/model or web/public/model"
-    )
+    parser.add_argument("--skip-copy", action="store_true", help="don't copy into web/public/model")
     args = parser.parse_args()
 
     root = Path(__file__).resolve().parent
@@ -79,16 +71,15 @@ def main():
     print(f"Wrote {vocab_path} and {meta_path}")
 
     if not args.skip_copy:
-        for asset_dir in ASSET_DIRS:
-            asset_dir.mkdir(parents=True, exist_ok=True)
-            for name, src in [
-                ("model.quant.onnx", quant_path),
-                ("vocab.json", vocab_path),
-                ("tokenizer_meta.json", meta_path),
-            ]:
-                dest = asset_dir / name
-                shutil.copy(src, dest)
-                print(f"Copied {src.name} -> {dest}")
+        WEB_ASSETS_DIR.mkdir(parents=True, exist_ok=True)
+        for name, src in [
+            ("model.quant.onnx", quant_path),
+            ("vocab.json", vocab_path),
+            ("tokenizer_meta.json", meta_path),
+        ]:
+            dest = WEB_ASSETS_DIR / name
+            shutil.copy(src, dest)
+            print(f"Copied {src.name} -> {dest}")
 
 
 if __name__ == "__main__":
