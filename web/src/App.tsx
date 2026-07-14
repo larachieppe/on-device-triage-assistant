@@ -3,18 +3,55 @@ import { useEffect, useState } from "react";
 import { onDeviceClassifier } from "./ml/onnxClassifier";
 import { triage } from "./services/triageRouter";
 import { LABEL_DESCRIPTIONS, type TriageResult } from "./types";
+import { AlertOctagonIcon, AlertTriangleIcon, CheckIcon, ClockIcon } from "./icons";
 import "./App.css";
 
-const LABEL_COLORS: Record<string, string> = {
-  self_care: "#2e7d32",
-  routine_care: "#1565c0",
-  urgent_care: "#ef6c00",
-  emergency: "#c62828",
+// Maps each triage label to a slot in the dataviz skill's fixed status
+// palette (good/warning/serious/critical) — see index.css. `ink` is which
+// glyph color clears contrast against that status color's fill (computed
+// once by hand from the palette's own contrast table, not guessed): good
+// and critical are dark/saturated enough for a white glyph, warning and
+// serious are light enough that they need a dark one.
+const STATUS: Record<
+  string,
+  { colorVar: string; washVar: string; ink: "light" | "dark"; title: string; Icon: () => React.JSX.Element }
+> = {
+  self_care: { colorVar: "--status-good", washVar: "--status-good-wash", ink: "light", title: "Self care", Icon: CheckIcon },
+  routine_care: { colorVar: "--status-warning", washVar: "--status-warning-wash", ink: "dark", title: "Routine care", Icon: ClockIcon },
+  urgent_care: { colorVar: "--status-serious", washVar: "--status-serious-wash", ink: "dark", title: "Urgent care", Icon: AlertTriangleIcon },
+  emergency: { colorVar: "--status-critical", washVar: "--status-critical-wash", ink: "light", title: "Emergency", Icon: AlertOctagonIcon },
 };
+
+function StatusChip({ label }: { label: string }) {
+  const meta = STATUS[label];
+  if (!meta) return null;
+  const Icon = meta.Icon;
+  return (
+    <span className={`status-chip status-chip--ink-${meta.ink}`} style={{ background: `var(${meta.colorVar})` }}>
+      <Icon />
+    </span>
+  );
+}
+
+function ConfidenceMeter({ value, label }: { value: number; label: string }) {
+  const meta = STATUS[label];
+  const pct = Math.round(value * 100);
+  const fill = meta ? `var(${meta.colorVar})` : "var(--text-h)";
+  const track = meta ? `var(${meta.washVar})` : "var(--border)";
+  return (
+    <div className="meter">
+      <div className="meter-track" style={{ background: track }}>
+        <div className="meter-fill" style={{ width: `${Math.max(pct, 3)}%`, background: fill }} />
+      </div>
+      <span className="meter-value">{pct}%</span>
+    </div>
+  );
+}
 
 export default function App() {
   const [text, setText] = useState("");
   const [result, setResult] = useState<TriageResult | null>(null);
+  const [resultKey, setResultKey] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [modelReady, setModelReady] = useState<boolean | null>(null);
@@ -35,12 +72,15 @@ export default function App() {
     try {
       const r = await triage(text.trim());
       setResult(r);
+      setResultKey((k) => k + 1);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }
   };
+
+  const meta = result ? STATUS[result.label] : undefined;
 
   return (
     <div className="page">
@@ -65,34 +105,47 @@ export default function App() {
           onChange={(e) => setText(e.target.value)}
           rows={4}
         />
-        <button type="submit" disabled={!text.trim() || loading}>
-          {loading ? "Checking..." : "Check"}
-        </button>
+        <div className="form-actions">
+          <button type="submit" disabled={!text.trim() || loading}>
+            {loading && <span className="spinner" aria-hidden="true" />}
+            {loading ? "Analyzing…" : "Check"}
+          </button>
+          {loading && <span className="form-status">Running on-device, no data leaves your browser</span>}
+        </div>
       </form>
 
       {error && <div className="error">{error}</div>}
 
       {result && (
-        <div className="result" style={{ borderColor: LABEL_COLORS[result.label] ?? "#333" }}>
-          <div className="result-label" style={{ color: LABEL_COLORS[result.label] ?? "#333" }}>
-            {result.label.replace("_", " ").toUpperCase()}
+        <div
+          key={resultKey}
+          className="result"
+          style={{ borderColor: meta ? `var(${meta.colorVar})` : "var(--border)" }}
+        >
+          <div className="result-header">
+            <StatusChip label={result.label} />
+            <div>
+              <div className="result-label">{meta?.title ?? result.label}</div>
+              <div className="result-source">
+                {result.source === "on_device" ? "On-device model" : "LLM fallback"} · {result.latencyMs}ms
+              </div>
+            </div>
           </div>
+
           <p className="result-description">
             {result.explanation ?? LABEL_DESCRIPTIONS[result.label] ?? ""}
           </p>
-          <div className="meta-row">
-            <span>Confidence: {(result.confidence * 100).toFixed(0)}%</span>
-            <span>Source: {result.source === "on_device" ? "On-device model" : "LLM fallback"}</span>
-          </div>
-          <div className="meta-row">
-            <span>Latency: {result.latencyMs}ms</span>
-            {result.onDeviceLatencyMs != null && (
-              <span>
-                (on-device pass: {result.onDeviceLatencyMs}ms @{" "}
-                {((result.onDeviceConfidence ?? 0) * 100).toFixed(0)}% conf)
-              </span>
-            )}
-          </div>
+
+          <ConfidenceMeter value={result.confidence} label={result.label} />
+
+          {result.onDeviceLatencyMs != null && (
+            <p className="result-detail">
+              On-device pass: {result.onDeviceLatencyMs}ms at{" "}
+              {Math.round((result.onDeviceConfidence ?? 0) * 100)}% confidence — verified via LLM
+              since that was below the trust threshold.
+            </p>
+          )}
+
           {result.fallbackUnavailable && (
             <p className="fallback-note">
               Confidence was below the threshold for a trustworthy on-device answer, and this

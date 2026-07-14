@@ -59,10 +59,14 @@ python3 -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
 
 python data/generate_synthetic_data.py --n-per-label 800
+python data/hard_eval_set.py   # hand-written, non-templated — see below
 python train.py --epochs 4
-python export_onnx.py   # quantizes to int8 and copies into mobile/assets/model/
-python eval.py          # per-class report + confidence histogram, use this to pick
-                         # CONFIDENCE_THRESHOLD in mobile/src/config.ts
+python export_onnx.py          # quantizes to int8 and copies into mobile/assets/model/
+
+python eval.py                                       # sanity check only — the templated
+                                                       # val set hits 100% and is not a
+                                                       # useful signal, see docs/ARCHITECTURE.md
+python eval.py --val-csv data/hard_eval_set.csv       # the real signal for CONFIDENCE_THRESHOLD
 ```
 
 Until you run `export_onnx.py`, `mobile/assets/model/` contains placeholder

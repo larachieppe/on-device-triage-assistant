@@ -15,6 +15,21 @@
   --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
   --mono: ui-monospace, Consolas, monospace;
 
+  /* Status palette (fixed — not themed, same steps in light/dark; each one
+     already clears 3:1 against both this app's surfaces). Maps to triage
+     severity: self_care -> good, routine_care -> warning, urgent_care ->
+     serious, emergency -> critical. Never used as text color directly (some
+     steps fail text contrast on light) — only as a filled chip/meter, per
+     the accompanying icon + label. */
+  --status-good: #0ca30c;
+  --status-good-wash: rgba(12, 163, 12, 0.12);
+  --status-warning: #fab219;
+  --status-warning-wash: rgba(250, 178, 25, 0.16);
+  --status-serious: #ec835a;
+  --status-serious-wash: rgba(236, 131, 90, 0.16);
+  --status-critical: #d03b3b;
+  --status-critical-wash: rgba(208, 59, 59, 0.14);
+
   font: 18px/145% var(--sans);
   letter-spacing: 0.18px;
   color-scheme: light dark;

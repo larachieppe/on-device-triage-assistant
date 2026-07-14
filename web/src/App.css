@@ -12,20 +12,20 @@ h1 {
 
 .disclaimer {
   font-size: 13px;
-  color: var(--text-muted, #777);
+  color: var(--text);
   margin-bottom: 24px;
 }
 
 .warning {
-  background: #fff4e5;
-  color: #8a5300;
+  background: var(--status-warning-wash);
+  color: var(--text-h);
   border-radius: 10px;
   padding: 12px 16px;
   font-size: 14px;
   margin-bottom: 20px;
 }
 .warning code {
-  background: rgba(0, 0, 0, 0.08);
+  background: rgba(127, 127, 127, 0.16);
   padding: 1px 5px;
   border-radius: 4px;
 }
@@ -43,30 +43,70 @@ textarea {
   font-size: 16px;
   padding: 12px;
   border-radius: 10px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text-h);
   resize: vertical;
+  transition: border-color 0.15s ease;
+}
+textarea:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.form-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 40px;
 }
 
 .form button {
-  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   font-size: 16px;
   font-weight: 600;
   padding: 10px 24px;
   border-radius: 10px;
   border: none;
-  background: #111;
-  color: #fff;
+  background: var(--text-h);
+  color: var(--bg);
   cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+.form button:hover:not(:disabled) {
+  opacity: 0.85;
 }
 .form button:disabled {
-  background: #999;
+  opacity: 0.6;
   cursor: not-allowed;
+}
+
+.form-status {
+  font-size: 12px;
+  color: var(--text);
+}
+
+.spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid rgba(128, 128, 128, 0.4);
+  border-top-color: currentColor;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .error {
   margin-top: 16px;
-  background: #fdecea;
-  color: #a12a2a;
+  background: var(--status-critical-wash);
+  color: var(--text-h);
   border-radius: 10px;
   padding: 12px 16px;
   font-size: 14px;
@@ -74,37 +114,116 @@ textarea {
 
 .result {
   margin-top: 24px;
-  border: 2px solid #333;
-  border-radius: 12px;
+  border: 2px solid var(--border);
+  border-radius: 14px;
   padding: 20px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 14px;
+  background: var(--bg);
+  box-shadow: var(--shadow);
+  animation: resultEnter 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes resultEnter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .result {
+    animation: none;
+  }
+  .spinner {
+    animation-duration: 1.4s;
+  }
+}
+
+.result-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.status-chip {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.status-chip svg {
+  width: 22px;
+  height: 22px;
+}
+.status-chip--ink-light {
+  color: #ffffff;
+}
+.status-chip--ink-dark {
+  color: #1a1a19;
 }
 
 .result-label {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
+  color: var(--text-h);
+}
+
+.result-source {
+  font-size: 12px;
+  color: var(--text);
+  margin-top: 2px;
 }
 
 .result-description {
   margin: 0;
   font-size: 15px;
+  color: var(--text-h);
 }
 
-.meta-row {
+.meter {
   display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
-  font-size: 13px;
-  color: var(--text-muted, #666);
+  align-items: center;
+  gap: 10px;
+}
+.meter-track {
+  flex: 1;
+  height: 8px;
+  border-radius: 999px;
+  overflow: hidden;
+}
+.meter-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.meter-value {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  width: 34px;
+  text-align: right;
+}
+
+.result-detail {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text);
 }
 
 .fallback-note {
   font-size: 12px;
-  color: var(--text-muted, #777);
-  margin: 4px 0 0;
+  color: var(--text);
+  margin: 0;
+  padding-top: 4px;
+  border-top: 1px solid var(--border);
 }
 .fallback-note code {
   background: rgba(127, 127, 127, 0.15);

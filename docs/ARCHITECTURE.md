@@ -23,7 +23,64 @@ confidence (`mobile/src/services/triageRouter.ts`):
 
 The threshold isn't picked arbitrarily — `ml/eval.py` buckets validation
 examples by confidence and reports accuracy per bucket, so the threshold is
-set at the point where accuracy measurably drops, not a guess.
+set at the point where accuracy measurably drops, not a guess. See
+"Calibration: the model is confidently wrong a lot" below for why that
+number is 0.95, and why picking it required a second, harder eval set.
+
+## Calibration: the model is confidently wrong a lot
+
+The templated validation set (`ml/data/generate_synthetic_data.py`) hits
+**100% accuracy**. That's not a sign the model is good — it's a sign the
+eval is too easy. The generator draws from a small fixed vocabulary of
+symptom phrases and sentence templates, and the same generator produced the
+training data, so the model only had to memorize surface patterns, not
+learn anything about symptom severity.
+
+`ml/data/hard_eval_set.py` is a second, hand-written set of 80 examples —
+casual phrasing, slang, typos, run-on sentences, the way people actually
+type when something's wrong with them — built specifically to *not* match
+the generator's patterns. Results (`python ml/eval.py --val-csv
+data/hard_eval_set.csv`):
+
+```
+              precision    recall  f1-score   support
+   self_care       0.62      0.75      0.68        20
+routine_care       1.00      0.55      0.71        20
+ urgent_care       0.52      0.70      0.60        20
+   emergency       0.72      0.65      0.68        20
+    accuracy                           0.66        80
+
+Confidence distribution:
+  [0.00, 0.50): n= 1  accuracy=0.000
+  [0.50, 0.70): n=10  accuracy=0.400
+  [0.70, 0.85): n= 5  accuracy=0.400
+  [0.85, 0.95): n= 4  accuracy=0.250
+  [0.95, 1.01): n=60  accuracy=0.767
+```
+
+Two things worth calling out:
+
+1. **Accuracy dropped from 100% to 66%** the moment the phrasing stopped
+   matching the training distribution. That's the honest number for a model
+   trained on synthetic data, and it's the reason this project is a demo of
+   an architecture pattern, not a claim that the classifier itself is any
+   good.
+2. **Confidence and correctness are only loosely related.** 75% of all
+   examples (60/80) land in the ≥95% confidence bucket, and even that bucket
+   is only 76.7% accurate. A softmax score is not a calibrated probability —
+   this model, like most classifiers trained on limited/synthetic data, is
+   frequently confident and wrong at the same time. The original threshold
+   (0.75, picked before this eval set existed) would have let most of those
+   wrong-but-confident answers through untouched. 0.95 is the only point in
+   the distribution where accuracy actually improves, so that's what
+   `CONFIDENCE_THRESHOLD` is set to now — not because it's a good threshold
+   in any absolute sense, but because it's the real one for *this* model, on
+   *this* data, measured rather than assumed.
+
+The deeper fix — temperature scaling, or routing on a signal other than raw
+softmax confidence — is out of scope here, but "confidence thresholds need
+calibration data to mean anything" is the actual lesson this project
+surfaces, and it only showed up once a harder eval set existed.
 
 ## Why MobileBERT instead of DistilBERT
 
