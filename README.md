@@ -1,5 +1,9 @@
 # On-Device Triage Assistant
 
+**Live demo:** https://larachieppe.github.io/on-device-triage-assistant/
+(on-device classification only — the LLM fallback needs `server/` running
+locally, see [Setup](#setup))
+
 A symptom-triage classifier that runs **entirely on-device** via a small,
 distilled transformer exported to ONNX — with a server-side Claude call as a
 fallback for cases the on-device model isn't confident about. Ships as both
