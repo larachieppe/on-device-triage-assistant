@@ -128,6 +128,14 @@ export default function App() {
               <div className="result-label">{meta?.title ?? result.label}</div>
               <div className="result-source">
                 {result.source === "on_device" ? "On-device model" : "LLM fallback"} · {result.latencyMs}ms
+                {result.fallbackUnavailable && (
+                  <span
+                    className="unverified-badge"
+                    title="Confidence was below the trust threshold, but this public demo has no LLM fallback server behind it — this is the raw on-device guess."
+                  >
+                    unverified
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -143,15 +151,6 @@ export default function App() {
               On-device pass: {result.onDeviceLatencyMs}ms at{" "}
               {Math.round((result.onDeviceConfidence ?? 0) * 100)}% confidence — verified via LLM
               since that was below the trust threshold.
-            </p>
-          )}
-
-          {result.fallbackUnavailable && (
-            <p className="fallback-note">
-              Confidence was below the threshold for a trustworthy on-device answer, and this
-              public demo has no LLM fallback server behind it — the result above is the raw
-              on-device guess. Run <code>server/</code> locally and set{" "}
-              <code>VITE_TRIAGE_SERVER_URL</code> to see the full routing behavior.
             </p>
           )}
         </div>
