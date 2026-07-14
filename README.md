@@ -1,9 +1,10 @@
 # On-Device Triage Assistant
 
-A React Native app that classifies a user's described symptoms into a triage
-category using a small, distilled transformer running **entirely on-device**
-via ONNX Runtime Mobile — with a server-side Claude call as a fallback for
-cases the on-device model isn't confident about.
+A symptom-triage classifier that runs **entirely on-device** via a small,
+distilled transformer exported to ONNX — with a server-side Claude call as a
+fallback for cases the on-device model isn't confident about. Ships as both
+a React Native app (ONNX Runtime Mobile) and a browser demo (onnxruntime-web)
+that share the same model, tokenizer logic, and routing decision.
 
 **Portfolio demo, not a medical product.** Training data is synthetic and
 templated (see `ml/data/generate_synthetic_data.py`); labels are not
@@ -41,6 +42,7 @@ the medical accuracy of the classifier.
 ml/       Python: synthetic data generation, fine-tuning, ONNX export/quantization
 server/   Node/Express proxy that calls Claude for the fallback path (keeps the API key off-device)
 mobile/   Expo React Native app (onnxruntime-react-native + a hand-rolled WordPiece tokenizer)
+web/      Vite/React browser demo (onnxruntime-web) — same tokenizer/routing logic, no native build needed
 ```
 
 ## Setup
@@ -72,7 +74,20 @@ npm install
 npm start               # http://localhost:8787
 ```
 
-### 3. Run the mobile app
+### 3. Try the browser demo (fastest way to test)
+
+No native build needed — this runs the same model via WebAssembly.
+
+```bash
+cd web
+npm install
+npm run dev   # http://localhost:5173
+```
+
+If the fallback server isn't on `localhost:8787`, set `VITE_TRIAGE_SERVER_URL`
+before starting (e.g. in `web/.env`).
+
+### 4. Run the mobile app
 
 `onnxruntime-react-native` is a native module, so this **will not run in
 Expo Go** — it needs a custom dev client build.
@@ -91,10 +106,14 @@ machine's LAN IP (not `localhost`) before starting the app, e.g.:
 EXPO_PUBLIC_TRIAGE_SERVER_URL=http://192.168.1.23:8787 npx expo start
 ```
 
+No local Xcode/Android Studio? Use [EAS Build](https://docs.expo.dev/build/introduction/)
+(`npx eas build --profile development --platform ios`) to build a dev client
+in the cloud and install it on a physical device instead.
+
 ## Tuning the tradeoff
 
-`mobile/src/config.ts` has the two knobs that define the cost/latency
-tradeoff this project is built around:
+Both `mobile/src/config.ts` and `web/src/config.ts` have the two knobs that
+define the cost/latency tradeoff this project is built around:
 
 - `CONFIDENCE_THRESHOLD` — below this, fall back to the LLM.
 - `ALWAYS_VERIFY_LABELS` — labels that always get double-checked regardless

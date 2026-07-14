@@ -17,5 +17,10 @@ mobile/ios/
 mobile/android/
 mobile/*.log
 
+# Web
+web/node_modules/
+web/dist/
+web/.env
+
 # OS
 .DS_Store
