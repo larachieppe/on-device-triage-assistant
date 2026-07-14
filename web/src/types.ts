@@ -4,7 +4,7 @@ export interface TriageResult {
   label: TriageLabel | string;
   confidence: number;
   explanation?: string;
-  source: "on_device" | "llm_fallback";
+  source: "on_device" | "llm_fallback" | "safety_override";
   latencyMs: number;
   onDeviceLatencyMs?: number;
   onDeviceConfidence?: number;

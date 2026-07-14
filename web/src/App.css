@@ -61,7 +61,7 @@ textarea:focus-visible {
   min-height: 40px;
 }
 
-.form button {
+.form-actions > button {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -75,10 +75,10 @@ textarea:focus-visible {
   cursor: pointer;
   transition: opacity 0.15s ease;
 }
-.form button:hover:not(:disabled) {
+.form-actions > button:hover:not(:disabled) {
   opacity: 0.85;
 }
-.form button:disabled {
+.form-actions > button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
@@ -230,5 +230,86 @@ textarea:focus-visible {
   margin: 0;
   font-size: 12px;
   color: var(--text);
+}
+
+.clarify {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px;
+  background: var(--bg);
+  animation: resultEnter 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.clarify-intro {
+  margin: 0;
+  font-size: 15px;
+  color: var(--text-h);
+}
+
+.clarify-safety {
+  margin: -8px 0 0;
+  font-size: 12px;
+  color: var(--status-critical);
+}
+
+.link-button {
+  align-self: flex-start;
+  background: none;
+  border: none;
+  padding: 0;
+  margin-top: -8px;
+  font-size: 12px;
+  color: var(--text);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.clarify-group {
+  border: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.clarify-group legend {
+  padding: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+.pill-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pill {
+  font-size: 13px;
+  font-weight: 500;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-h);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.pill:hover {
+  border-color: var(--accent);
+}
+.pill--selected {
+  border-color: var(--text-h);
+  background: var(--text-h);
+  color: var(--bg);
+}
+.pill--danger.pill--selected {
+  border-color: var(--status-critical);
+  background: var(--status-critical);
+  color: #ffffff;
 }
 
