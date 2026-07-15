@@ -1,39 +1,85 @@
 .page {
-  max-width: 640px;
+  max-width: 680px;
   margin: 0 auto;
-  padding: 48px 20px 80px;
+  padding: 64px 20px 96px;
   text-align: left;
 }
 
+.hero {
+  position: relative;
+  text-align: center;
+  padding-bottom: 44px;
+}
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: -48px -24px auto -24px;
+  height: 280px;
+  background: radial-gradient(50% 100% at 50% 0%, var(--accent-bg), transparent 72%);
+  z-index: -1;
+  pointer-events: none;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  margin-bottom: 20px;
+  border-radius: 999px;
+  background: var(--accent-bg);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.eyebrow::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
 h1 {
-  font-size: 28px;
-  margin-bottom: 8px;
+  font-size: 44px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  margin: 0 0 16px;
+  color: var(--text-h);
+}
+@media (max-width: 640px) {
+  h1 {
+    font-size: 32px;
+  }
 }
 
 .disclaimer {
-  font-size: 13px;
+  max-width: 480px;
+  margin: 0 auto;
+  font-size: 14px;
+  line-height: 1.6;
   color: var(--text);
-  margin-bottom: 24px;
 }
 
 .warning {
   background: var(--status-warning-wash);
   color: var(--text-h);
-  border-radius: 10px;
-  padding: 12px 16px;
+  border-radius: 14px;
+  padding: 14px 18px;
   font-size: 14px;
   margin-bottom: 20px;
 }
 .warning code {
   background: rgba(127, 127, 127, 0.16);
   padding: 1px 5px;
-  border-radius: 4px;
 }
 
 .form {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
 }
 
 textarea {
@@ -41,46 +87,56 @@ textarea {
   box-sizing: border-box;
   font: inherit;
   font-size: 16px;
-  padding: 12px;
-  border-radius: 10px;
+  padding: 16px;
+  border-radius: 18px;
   border: 1px solid var(--border);
-  background: var(--bg);
+  background: var(--bg-raised);
   color: var(--text-h);
   resize: vertical;
-  transition: border-color 0.15s ease;
+  box-shadow: var(--shadow);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+textarea::placeholder {
+  color: var(--text);
+  opacity: 0.7;
 }
 textarea:focus-visible {
   outline: none;
-  border-color: var(--accent);
+  border-color: var(--accent-border);
+  box-shadow: var(--shadow), 0 0 0 4px var(--accent-bg);
 }
 
 .form-actions {
   display: flex;
   align-items: center;
   gap: 12px;
-  min-height: 40px;
+  min-height: 44px;
 }
 
 .form-actions > button {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
-  padding: 10px 24px;
-  border-radius: 10px;
+  padding: 13px 28px;
+  border-radius: 999px;
   border: none;
   background: var(--text-h);
   color: var(--bg);
   cursor: pointer;
-  transition: opacity 0.15s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08), 0 10px 24px -10px var(--accent-border);
+  transition: opacity 0.15s ease, transform 0.15s ease;
 }
 .form-actions > button:hover:not(:disabled) {
-  opacity: 0.85;
+  opacity: 0.88;
+  transform: translateY(-1px);
 }
 .form-actions > button:disabled {
-  opacity: 0.6;
+  opacity: 0.55;
+  box-shadow: none;
   cursor: not-allowed;
+  transform: none;
 }
 
 .form-status {
@@ -107,20 +163,21 @@ textarea:focus-visible {
   margin-top: 16px;
   background: var(--status-critical-wash);
   color: var(--text-h);
-  border-radius: 10px;
-  padding: 12px 16px;
+  border-radius: 14px;
+  padding: 14px 18px;
   font-size: 14px;
 }
 
 .result {
   margin-top: 24px;
-  border: 2px solid var(--border);
-  border-radius: 14px;
-  padding: 20px;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--border);
+  border-radius: 20px;
+  padding: 24px;
   display: flex;
   flex-direction: column;
   gap: 14px;
-  background: var(--bg);
+  background: var(--bg-raised);
   box-shadow: var(--shadow);
   animation: resultEnter 0.32s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -146,14 +203,14 @@ textarea:focus-visible {
 .result-header {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
 }
 
 .status-chip {
   flex-shrink: 0;
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -170,9 +227,9 @@ textarea:focus-visible {
 }
 
 .result-label {
-  font-size: 18px;
+  font-size: 19px;
   font-weight: 700;
-  letter-spacing: 0.01em;
+  letter-spacing: -0.01em;
   color: var(--text-h);
 }
 
@@ -185,6 +242,7 @@ textarea:focus-visible {
 .result-description {
   margin: 0;
   font-size: 15px;
+  line-height: 1.55;
   color: var(--text-h);
 }
 
@@ -203,22 +261,23 @@ textarea:focus-visible {
 .clarify {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 20px;
   border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 20px;
-  background: var(--bg);
+  border-radius: 20px;
+  padding: 24px;
+  background: var(--bg-raised);
+  box-shadow: var(--shadow);
   animation: resultEnter 0.24s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .clarify-intro {
   margin: 0;
-  font-size: 15px;
+  font-size: 16px;
   color: var(--text-h);
 }
 
 .clarify-safety {
-  margin: -8px 0 0;
+  margin: -10px 0 0;
   font-size: 12px;
   color: var(--status-critical);
 }
@@ -241,7 +300,7 @@ textarea:focus-visible {
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 .clarify-group legend {
   padding: 0;
@@ -259,25 +318,29 @@ textarea:focus-visible {
 .pill {
   font-size: 13px;
   font-weight: 500;
-  padding: 8px 16px;
+  padding: 9px 18px;
   border-radius: 999px;
   border: 1px solid var(--border);
-  background: transparent;
+  background: var(--bg);
   color: var(--text-h);
   cursor: pointer;
-  transition: border-color 0.15s ease, background 0.15s ease;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
 }
 .pill:hover {
-  border-color: var(--accent);
+  border-color: var(--accent-border);
+  background: var(--accent-bg);
 }
 .pill--selected {
   border-color: var(--text-h);
   background: var(--text-h);
   color: var(--bg);
 }
+.pill--selected:hover {
+  background: var(--text-h);
+  border-color: var(--text-h);
+}
 .pill--danger.pill--selected {
   border-color: var(--status-critical);
   background: var(--status-critical);
   color: #ffffff;
 }
-

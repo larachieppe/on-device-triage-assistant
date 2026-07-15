@@ -1,25 +1,27 @@
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+  --text: #6b6f76;
+  --text-h: #14171a;
+  --bg: #fdfcfa;
+  --bg-raised: #ffffff;
+  --border: #e7e5e0;
+  --code-bg: #f2f1ec;
+  --shadow: 0 1px 2px rgba(20, 23, 26, 0.04), 0 16px 40px -16px rgba(20, 23, 26, 0.16);
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
+  /* Brand accent — a calm teal, deliberately distinct from all four status
+     colors below so it never gets mistaken for a severity signal. Used for
+     focus rings, the eyebrow badge, and the hero glow; never for a result. */
+  --accent: #0d9488;
+  --accent-bg: rgba(13, 148, 136, 0.1);
+  --accent-border: rgba(13, 148, 136, 0.45);
+
+  --sans: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
   --mono: ui-monospace, Consolas, monospace;
 
   /* Status palette (fixed — not themed, same steps in light/dark; each one
      already clears 3:1 against both this app's surfaces). Maps to triage
      severity: self_care -> good, routine_care -> warning, urgent_care ->
      serious, emergency -> critical. Never used as text color directly (some
-     steps fail text contrast on light) — only as a filled chip/meter, per
+     steps fail text contrast on light) — only as a filled chip/accent, per
      the accompanying icon + label. */
   --status-good: #0ca30c;
   --status-good-wash: rgba(12, 163, 12, 0.12);
@@ -30,8 +32,7 @@
   --status-critical: #d03b3b;
   --status-critical-wash: rgba(208, 59, 59, 0.14);
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
+  font: 17px/1.55 var(--sans);
   color-scheme: light dark;
   color: var(--text);
   background: var(--bg);
@@ -39,88 +40,42 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
+    --text: #9a9fa6;
+    --text-h: #f5f6f7;
+    --bg: #101214;
+    --bg-raised: #17191c;
+    --border: #262a2e;
+    --code-bg: #1c1f22;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 20px 48px -16px rgba(0, 0, 0, 0.6);
 
-  #social .button-icon {
-    filter: invert(1) brightness(2);
+    --accent: #2dd4bf;
+    --accent-bg: rgba(45, 212, 191, 0.14);
+    --accent-border: rgba(45, 212, 191, 0.4);
   }
 }
 
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
+* {
   box-sizing: border-box;
+}
+
+html {
+  overflow-x: hidden;
 }
 
 body {
   margin: 0;
+  overflow-x: hidden;
 }
 
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
-}
-
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
-}
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
 p {
   margin: 0;
 }
 
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
-}
-
 code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+  font-family: var(--mono);
+  border-radius: 4px;
 }

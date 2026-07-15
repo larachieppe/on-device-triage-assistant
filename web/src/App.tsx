@@ -174,12 +174,15 @@ export default function App() {
 
   return (
     <div className="page">
-      <h1>On-Device Triage Assistant</h1>
-      <p className="disclaimer">
-        Portfolio demo only — not medical advice. Synthetic training data, not clinically
-        validated. The classifier runs entirely in your browser via WebAssembly; nothing you type
-        is sent anywhere unless the on-device model is unsure and falls back to the LLM.
-      </p>
+      <div className="hero">
+        <span className="eyebrow">Runs on-device, in your browser</span>
+        <h1>On-Device Triage Assistant</h1>
+        <p className="disclaimer">
+          Portfolio demo only — not medical advice. Synthetic training data, not clinically
+          validated. Nothing you type leaves your browser unless the on-device model is unsure and
+          falls back to the LLM.
+        </p>
+      </div>
 
       {modelReady === false && (
         <div className="warning">
@@ -325,7 +328,7 @@ export default function App() {
         <div
           key={resultKey}
           className="result"
-          style={{ borderColor: meta ? `var(${meta.colorVar})` : "var(--border)" }}
+          style={{ borderLeftColor: meta ? `var(${meta.colorVar})` : "var(--border)" }}
         >
           <div className="result-header">
             <StatusChip label={result.label} />
