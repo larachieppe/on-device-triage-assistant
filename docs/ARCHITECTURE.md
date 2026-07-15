@@ -156,9 +156,6 @@ logic, not just a threshold.
 - **Real auth on the server.** The rate limit and request budget stop casual
   abuse, not a determined attacker — there's no API key or account system
   gating `/triage/fallback`, which a real product would need.
-- **A native mobile app.** An earlier version of this project shipped a
-  React Native / ONNX Runtime Mobile app alongside the browser demo. It was
-  dropped to keep one client instead of two drifting in and out of sync —
-  the interesting parts (on-device inference, the routing decision, the
-  clarifying-questions flow) are just as demonstrable in a browser, without
-  needing a device or simulator to show anyone.
+- **A native mobile client.** Everything runs in the browser — on-device
+  inference, the routing decision, the clarifying-questions flow — with no
+  device or simulator needed to see any of it.
