@@ -24,14 +24,22 @@ import "./App.css";
 // once by hand from the palette's own contrast table, not guessed): good
 // and critical are dark/saturated enough for a white glyph, warning and
 // serious are light enough that they need a dark one.
+//
+// `title` is deliberately an action ("Get help right now"), not a category
+// noun ("Emergency") — a diagnosis-shaped label reads as a verdict being
+// handed down; a sentence telling you what to do reads as advice. The
+// severity signal doesn't get any weaker for it: the color, icon, and
+// explanation text still make emergency unmistakably different from
+// self-care, this just changes whether the headline feels like an alarm
+// going off or a person telling you what to do next.
 const STATUS: Record<
   string,
   { colorVar: string; washVar: string; ink: "light" | "dark"; title: string; Icon: () => React.JSX.Element }
 > = {
-  self_care: { colorVar: "--status-good", washVar: "--status-good-wash", ink: "light", title: "Self care", Icon: CheckIcon },
-  routine_care: { colorVar: "--status-warning", washVar: "--status-warning-wash", ink: "dark", title: "Routine care", Icon: ClockIcon },
-  urgent_care: { colorVar: "--status-serious", washVar: "--status-serious-wash", ink: "dark", title: "Urgent care", Icon: AlertTriangleIcon },
-  emergency: { colorVar: "--status-critical", washVar: "--status-critical-wash", ink: "light", title: "Emergency", Icon: AlertOctagonIcon },
+  self_care: { colorVar: "--status-good", washVar: "--status-good-wash", ink: "light", title: "Care for it at home", Icon: CheckIcon },
+  routine_care: { colorVar: "--status-warning", washVar: "--status-warning-wash", ink: "dark", title: "Mention it to a doctor", Icon: ClockIcon },
+  urgent_care: { colorVar: "--status-serious", washVar: "--status-serious-wash", ink: "dark", title: "Get seen today", Icon: AlertTriangleIcon },
+  emergency: { colorVar: "--status-critical", washVar: "--status-critical-wash", ink: "light", title: "Get help right now", Icon: AlertOctagonIcon },
 };
 
 const SOURCE_LABEL: Record<string, string> = {
@@ -47,9 +55,9 @@ const SOURCE_LABEL: Record<string, string> = {
 // system actually has. This says how the answer was reached instead, which
 // is true and checkable, rather than a number that looks precise but isn't.
 const SOURCE_EXPLANATION: Record<string, string> = {
-  on_device: "The on-device model was confident enough to answer directly, no server call needed.",
-  llm_fallback: "The on-device model wasn't confident enough on its own, so Claude double-checked it.",
-  safety_override: "This didn't involve the model — it matched a fixed safety rule based on what you flagged.",
+  on_device: "Answered on-device, right away.",
+  llm_fallback: "Double-checked with Claude before answering, since the quick read wasn't confident enough to trust alone.",
+  safety_override: "Answered by a fixed safety rule, not the model — some symptoms always get treated as urgent, no second-guessing.",
 };
 
 function StatusChip({ label }: { label: string }) {
@@ -145,7 +153,7 @@ export default function App() {
           confidence: 1,
           source: "safety_override",
           latencyMs: 0,
-          explanation: `You flagged: ${flags}. Any one of these always routes straight to emergency — that check runs regardless of what the model thinks.`,
+          explanation: `Because you mentioned ${flags.toLowerCase()}, please get medical help right away — symptoms like these are always treated as urgent, so there's no need to wait on anything else here.`,
         });
       } else {
         const answers: ClarifyAnswers = { duration, severity, trajectory, affectsDailyLife, redFlags };

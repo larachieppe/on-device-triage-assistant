@@ -67,8 +67,13 @@ categories:
 - emergency: seek emergency care immediately (call local emergency services).
 
 Err toward the more urgent category when the description is ambiguous or could plausibly involve a \
-serious condition. This is a portfolio demo, not a medical device — always include a brief plain-\
-language explanation and a reminder that this is not a substitute for professional medical advice.`;
+serious condition — accuracy on urgency comes first. But how you say it matters too: write the \
+explanation like a calm, caring person giving clear advice, not a clinical alert. Avoid alarming or \
+clinical-sounding phrasing ("EMERGENCY", "seek immediate medical attention", exclamation points) — \
+say plainly what to do and why, the same way you'd tell a friend. Urgency should come through in the \
+clarity of the instruction, not in how loud it sounds. This is a portfolio demo, not a medical \
+device — always include a brief, kind explanation and a reminder that this is not a substitute for \
+professional medical advice.`;
 
 const TRIAGE_TOOL = {
   name: "submit_triage",

@@ -167,6 +167,34 @@ than an unnecessary LLM call, `ALWAYS_VERIFY_LABELS` forces verification for
 that label regardless of confidence — a deliberate asymmetry in the routing
 logic, not just a threshold.
 
+## Tone: advice, not alarms
+
+Early copy leaned clinical — a bold "EMERGENCY" label, "seek emergency care
+immediately," matter-of-fact system-internals explanations ("this check
+runs regardless of what the model thinks"). Feedback was that it read as
+stress-inducing rather than helpful, which is a legitimate product problem:
+a triage tool that scares people isn't obviously better than one that's
+merely accurate.
+
+The fix was scoped to *communication*, not the underlying decision:
+
+- `STATUS[label].title` in `web/src/App.tsx` is an action ("Get help right
+  now") instead of a category noun ("Emergency"). A verdict-shaped label
+  reads as being judged; a sentence telling you what to do reads as advice.
+- `LABEL_DESCRIPTIONS` (`web/src/types.ts`) and the safety-override message
+  are written like a calm person talking to you, not a clinical alert.
+- The Claude fallback's system prompt (`server/index.js`) now explicitly
+  asks for calm, plain phrasing and says urgency should come through in the
+  *clarity* of the instruction, not in how loud it sounds.
+
+What didn't change: the red flag safety override, the color coding
+(critical red for `emergency`, per the dataviz skill's status palette), the
+confidence threshold, or which category anything gets classified into.
+Making a real emergency result *sound* gentler is a legitimate UX fix;
+making the system less likely to *tell* someone it's an emergency in the
+name of not alarming them would be a safety regression wearing a UX
+justification, and that line is worth being explicit about.
+
 ## What's intentionally out of scope
 
 - **Real clinical data / validation.** The dataset is templated and
