@@ -1,7 +1,11 @@
-// Thin proxy that holds the Anthropic API key server-side. The web app
-// never talks to Claude directly — it only calls this server, which is the
-// whole point: an API key bundled into a client-side app is trivially
-// extractable, so the fallback call has to happen behind a service boundary.
+// This process serves two things: the built web/ frontend as static files,
+// and the /triage/fallback API that holds the Anthropic API key. One Render
+// service instead of a static site + a separate API service, on purpose —
+// a static site product has no server-side runtime to keep a secret in, so
+// the frontend and the key-holding API have to live in the same process
+// (or at least the same kind of deployable) for this to work as one public
+// deploy. Same-origin also means the frontend can call `/triage/fallback`
+// with a relative path — no cross-service URL to keep in sync.
 //
 // This is deployed publicly (see ../render.yaml), so unlike a local-only
 // dev server, an open /triage/fallback endpoint is a real cost-abuse risk —
@@ -12,6 +16,8 @@
 // a real product — see docs/ARCHITECTURE.md.
 
 require("dotenv").config({ quiet: true });
+const path = require("path");
+const fs = require("fs");
 const express = require("express");
 const cors = require("cors");
 const rateLimit = require("express-rate-limit");
@@ -128,7 +134,24 @@ app.post("/triage/fallback", fallbackLimiter, globalBudgetGuard, async (req, res
   }
 });
 
+// Serves the built frontend if present. It won't be during local `npm run
+// dev` here (the two apps run as separate dev servers locally for fast
+// iteration — see README), but will be in production once render.yaml's
+// buildCommand runs `npm run build` in web/ first. The fallback is a bare
+// app.use(), not app.get("*", ...) — Express 5's router (path-to-regexp v8)
+// dropped the old bare "*" wildcard route syntax, and a path-less app.use()
+// sidesteps needing a route pattern at all. It's placed last and only
+// handles GET, so it can't shadow the POST route above.
+const WEB_DIST = path.join(__dirname, "..", "web", "dist");
+if (fs.existsSync(WEB_DIST)) {
+  app.use(express.static(WEB_DIST));
+  app.use((req, res, next) => {
+    if (req.method !== "GET") return next();
+    res.sendFile(path.join(WEB_DIST, "index.html"));
+  });
+}
+
 const PORT = process.env.PORT || 8787;
 app.listen(PORT, () => {
-  console.log(`Triage fallback server listening on http://localhost:${PORT}`);
+  console.log(`Triage server listening on http://localhost:${PORT}`);
 });

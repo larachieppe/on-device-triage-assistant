@@ -1,22 +1,19 @@
-# Render Blueprint — deploys both services in one shot from the Render
-# dashboard: New + -> Blueprint -> select this repo. Render reads this file
-# automatically; nothing else to configure except ANTHROPIC_API_KEY (marked
-# `sync: false` below, so Render prompts for it instead of it living in git).
-#
-# If either service name below is already taken on your Render account,
-# Render appends a suffix to the subdomain it assigns, and the predictable
-# https://<name>.onrender.com URLs the two services reference below won't
-# match. If that happens: open the other service's Environment tab in the
-# Render dashboard, fix the URL by hand, and trigger a manual redeploy.
+# Render Blueprint — deploys the whole app in one shot from the Render
+# dashboard: New + -> Blueprint -> select this repo. One Node web service,
+# not a static site + a separate API: the build compiles web/ into static
+# files, then server/index.js serves them itself alongside the
+# /triage/fallback API — see the comment at the top of server/index.js for
+# why that's one process instead of two services. Nothing to configure
+# except ANTHROPIC_API_KEY (marked `sync: false` below, so Render prompts
+# for it instead of it living in git).
 
 services:
   - type: web
-    name: on-device-triage-server
+    name: on-device-triage-assistant
     runtime: node
     plan: free
-    rootDir: server
-    buildCommand: npm ci
-    startCommand: npm start
+    buildCommand: npm --prefix web ci && npm --prefix web run build && npm --prefix server ci
+    startCommand: npm --prefix server start
     healthCheckPath: /health
     envVars:
       - key: ANTHROPIC_API_KEY
@@ -25,19 +22,3 @@ services:
         value: claude-sonnet-5
       - key: GLOBAL_REQUEST_BUDGET
         value: "300"
-      - key: ALLOWED_ORIGIN
-        value: https://on-device-triage-web.onrender.com
-
-  - type: web
-    name: on-device-triage-web
-    runtime: static
-    rootDir: web
-    buildCommand: npm ci && npm run build
-    staticPublishPath: dist
-    envVars:
-      - key: VITE_TRIAGE_SERVER_URL
-        value: https://on-device-triage-server.onrender.com
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /index.html

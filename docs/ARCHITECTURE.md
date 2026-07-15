@@ -118,23 +118,28 @@ reduction instead of just picking "the smaller of two BERT variants."
 
 An API key embedded in client-side JavaScript can be read out of the bundle
 by anyone — it is not a secret once it ships, regardless of how it's
-minified. `server/index.js` is a thin Express proxy that holds
-`ANTHROPIC_API_KEY` and is the only thing that talks to Claude. The web app
-only ever calls the proxy's `/triage/fallback` endpoint.
+minified. `server/index.js` holds `ANTHROPIC_API_KEY` and is the only thing
+that talks to Claude. The frontend only ever calls the relative path
+`/triage/fallback`.
 
-This is deployed as two separate Render services (`render.yaml`) rather than
-one, specifically so the server can hold a secret the static site can't:
-Render's static-site product has no server-side runtime to keep an API key
-in, which is exactly why a static-only deploy (this project's first
-iteration, on GitHub Pages) could only ever ship the on-device half of the
-story. Splitting into a static site + a web service is what makes the full
-routing behavior demonstrable publicly, not just in local dev.
+That relative path is the reason this deploys as **one Node process**
+(`render.yaml`) rather than a static site plus a separate API service:
+`server/index.js` serves the built `web/dist` static files itself, in
+addition to handling the API routes. This project's first deploy was
+GitHub Pages, which is static-hosting-only — no server-side runtime means
+nowhere to keep `ANTHROPIC_API_KEY`, which is exactly why that version could
+only ever ship the on-device half of the story (the LLM fallback was
+unreachable in production, only in local dev). One process that does both
+jobs is what makes the *full* routing behavior — on-device → clarifying
+questions → LLM fallback — demonstrable publicly, and it comes with a
+smaller footgun than a two-service split: no second service whose URL has
+to be kept in sync with the first, no CORS configuration to get right.
 
 Now that the server is genuinely public instead of a local dev convenience,
-`server/index.js` also carries a per-IP rate limit and a process-lifetime
-request budget (`GLOBAL_REQUEST_BUDGET`) as cost-abuse mitigations. Neither
-is a substitute for real auth on an actual product — see "What's
-intentionally out of scope" below.
+it also carries a per-IP rate limit and a process-lifetime request budget
+(`GLOBAL_REQUEST_BUDGET`) as cost-abuse mitigations. Neither is a substitute
+for real auth on an actual product — see "What's intentionally out of
+scope" below.
 
 ## Why `emergency` always gets verified
 

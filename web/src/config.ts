@@ -20,8 +20,12 @@ export const CONFIDENCE_THRESHOLD = 0.95;
 // mistake this app can make.
 export const ALWAYS_VERIFY_LABELS = ["emergency"];
 
-// Unset (rather than defaulting to localhost) on purpose: the public GitHub
-// Pages build has no fallback server behind it, and hitting a visitor's own
-// localhost:8787 would just fail silently. Set this at build time (e.g. in
-// web/.env, or when running `npm run dev` locally) to enable the LLM fallback.
-export const FALLBACK_SERVER_URL: string | undefined = import.meta.env.VITE_TRIAGE_SERVER_URL;
+// Empty string by default, meaning "same origin as this page" — in
+// production, server/index.js serves this app *and* the API from one
+// process (see render.yaml), so a relative fetch("/triage/fallback") just
+// works with nothing to configure. Local dev is the one case that needs an
+// override: `npm run dev` here runs a separate Vite dev server from
+// `npm run dev` in server/, on a different port, so set
+// VITE_TRIAGE_SERVER_URL=http://localhost:8787 in web/.env for local fallback
+// calls to reach it.
+export const FALLBACK_SERVER_URL: string = import.meta.env.VITE_TRIAGE_SERVER_URL || "";

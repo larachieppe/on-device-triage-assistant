@@ -277,14 +277,6 @@ export default function App() {
               <div className="result-label">{meta?.title ?? result.label}</div>
               <div className="result-source">
                 {SOURCE_LABEL[result.source] ?? result.source} · {result.latencyMs}ms
-                {result.fallbackUnavailable && (
-                  <span
-                    className="unverified-badge"
-                    title="Confidence was below the trust threshold, but this public demo has no LLM fallback server behind it — this is the raw on-device guess."
-                  >
-                    unverified
-                  </span>
-                )}
               </div>
             </div>
           </div>

@@ -8,7 +8,6 @@ export interface TriageResult {
   latencyMs: number;
   onDeviceLatencyMs?: number;
   onDeviceConfidence?: number;
-  fallbackUnavailable?: boolean;
 }
 
 export const LABEL_DESCRIPTIONS: Record<string, string> = {

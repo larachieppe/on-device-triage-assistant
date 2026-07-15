@@ -28,26 +28,36 @@ the medical accuracy of the classifier.
 
 ## Architecture
 
+Deployed as **one Node process**: `server/index.js` serves the built `web/`
+frontend as static files *and* handles the `/triage/fallback` API that holds
+the Anthropic key — not a static site plus a separate API service. Same
+origin means the frontend calls `/triage/fallback` as a plain relative path,
+nothing to wire up between services.
+
 ```
-┌─────────────┐      confident enough       ┌──────────────────┐
-│  Browser    │ ───────────────────────────▶│  Show result      │
-│  (web/)     │                              └──────────────────┘
-│  1. type    │
-│     symptom │      low confidence /        ┌──────────────────┐
-│  2. run     │      emergency-leaning        │  server/          │
-│     ONNX    │ ──▶ ask clarifying Qs ──────▶ │  Express proxy    │
-│     model   │      (or hard safety rule)    │  → Claude API     │
-│     locally │ ◀─────────────────────────── │  (holds API key)  │
-└─────────────┘         triage result         └──────────────────┘
+┌──────────────────────────────────────────────────┐
+│  server/ (one Express process)                     │
+│                                                      │
+│  serves web/dist  ──────────▶  Browser loads the app │
+│                                                      │
+│  Browser: 1. type symptom                           │
+│           2. run ONNX model locally                 │
+│                                                      │
+│           confident enough ──────────▶ show result  │
+│           low confidence / emergency-leaning         │
+│             ──▶ ask clarifying Qs (or hard safety    │
+│                 rule) ──▶ POST /triage/fallback ───▶│
+│                 Claude API (key stays server-side)   │
+└──────────────────────────────────────────────────┘
 ```
 
 ## Repo layout
 
 ```
 ml/       Python: synthetic data generation, fine-tuning, ONNX export/quantization
-server/   Node/Express proxy that calls Claude for the fallback path (keeps the API key off-device)
+server/   Node/Express app — serves the built web/ frontend AND the Claude fallback API
 web/      Vite/React browser app (onnxruntime-web) — the only client
-render.yaml   Render Blueprint that deploys both server/ and web/
+render.yaml   Render Blueprint that deploys the whole thing as one service
 ```
 
 ## Setup
@@ -74,44 +84,52 @@ Until you run `export_onnx.py`, `web/public/model/` contains placeholder
 files so the app still builds — the classifier will throw a clear error if
 you try to use it before a real model is exported.
 
-### 2. Run the fallback server
+### 2. Local development
+
+Locally, the frontend and the API run as **two separate dev servers** for
+fast iteration (Vite's dev server gives instant HMR; that's not available
+once the frontend is a built static bundle). This is dev-only — production
+is one process, see below.
 
 ```bash
+# terminal 1
 cd server
 cp .env.example .env   # add your ANTHROPIC_API_KEY
 npm install
-npm start               # http://localhost:8787
-```
+npm run dev              # http://localhost:8787
 
-### 3. Run the web app
-
-```bash
+# terminal 2
 cd web
 npm install
-npm run dev   # http://localhost:5173
+cp .env.example .env   # VITE_TRIAGE_SERVER_URL=http://localhost:8787
+npm run dev              # http://localhost:5173
 ```
 
-If the fallback server isn't on `localhost:8787`, set `VITE_TRIAGE_SERVER_URL`
-before starting (e.g. in `web/.env`).
+### 3. Run it the way production runs it (optional)
+
+To sanity-check the actual merged deploy locally before pushing:
+
+```bash
+cd web && npm ci && npm run build && cd ..
+cd server && npm start   # now serves the built web/ app AND the API on :8787
+```
 
 ## Deploying to Render
 
 `render.yaml` is a [Render Blueprint](https://render.com/docs/blueprint-spec)
-that deploys both services in one shot:
+that deploys the whole app as **one Node web service** — no static site
+product involved, no second service to keep in sync:
 
 1. Push this repo to GitHub (already done if you're reading this from the repo).
 2. In the Render dashboard: **New +** → **Blueprint** → select this repo.
-   Render reads `render.yaml` automatically and provisions both services.
-3. Render will prompt for `ANTHROPIC_API_KEY` on the server service (it's
-   marked `sync: false` in the Blueprint specifically so it's never written
-   to git) — paste your key there.
-4. Wait for both builds to finish. The web service's build embeds the
-   server's URL into the bundle via `VITE_TRIAGE_SERVER_URL`.
-
-If either service name in `render.yaml` was already taken on your account,
-Render assigned it a different subdomain than the Blueprint assumed, and the
-two services won't find each other. Fix: open the affected service's
-**Environment** tab, correct the URL by hand, and trigger a manual redeploy.
+   Render reads `render.yaml` and provisions the service automatically —
+   build command, start command, and health check path all come from that
+   file, nothing to fill in by hand.
+3. Render will prompt for `ANTHROPIC_API_KEY` (it's marked `sync: false` in
+   the Blueprint specifically so it's never written to git) — paste your
+   key there.
+4. Wait for the build to finish (it runs `npm ci && npm run build` in `web/`,
+   then `npm ci` in `server/`, then starts `server/index.js`).
 
 The server has two abuse-mitigations baked in since it's genuinely public
 now, not just a local dev convenience — see the comments in `server/index.js`:
