@@ -94,17 +94,25 @@ conclusions on too little information.
 
 `web/src/clarify.ts` + the `clarifying` phase in `App.tsx` insert a short
 step between "on-device model is unsure or leans emergency" and "show a
-result": three fixed questions (duration, severity, a red-flag check for
-trouble breathing/chest pain/confusion/heavy bleeding). A "yes" on the
-red-flag question hard-routes to emergency through a deterministic rule that
-bypasses the model entirely — that check should never depend on classifier
-confidence. Otherwise, the answers get folded back into the original text
-and re-run through the *same* on-device/LLM pipeline with more context.
+result": five fixed questions — duration, severity, trajectory (better/
+worse/same), whether it's affecting daily function, and a multi-select
+red-flag checklist (trouble breathing, chest pain, confusion, uncontrolled
+bleeding, sudden severe pain, loss of consciousness). The first version of
+this only asked three questions and used a single yes/no red-flag toggle;
+it was expanded because a binary "emergency or not" gate doesn't actually
+differentiate `self_care` / `routine_care` / `urgent_care` from each other —
+trajectory and functional impact are what a clinician actually uses to tell
+those three apart, not just duration and severity.
 
-No new model or scoring logic was needed — more signal into the same
-classifier was enough on its own to flip confidently-wrong guesses. The
-headache-and-dizzy example above goes from an Emergency first guess to Self
-care at 97% confidence once duration and severity are known.
+Selecting *any* red flag hard-routes to emergency through a deterministic
+rule that bypasses the model entirely — that check should never depend on
+classifier confidence, and naming which specific flags were selected in the
+result ("You flagged: chest pain, trouble breathing") is more honest than a
+single canned sentence. Otherwise, every answer gets folded back into the
+original text and re-run through the *same* on-device/LLM pipeline with
+more context — no new model or scoring logic needed. The headache-and-dizzy
+example: with no red flags, mild severity, and improving trajectory, it goes
+from an Emergency first guess to Self care at 99% confidence.
 
 ## Why MobileBERT instead of DistilBERT
 

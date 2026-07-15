@@ -7,9 +7,14 @@ import { AlertOctagonIcon, AlertTriangleIcon, CheckIcon, ClockIcon } from "./ico
 import {
   buildEnrichedText,
   DURATION_OPTIONS,
+  RED_FLAG_OPTIONS,
+  redFlagLabels,
   SEVERITY_OPTIONS,
+  TRAJECTORY_OPTIONS,
+  type ClarifyAnswers,
   type Duration,
   type Severity,
+  type Trajectory,
 } from "./clarify";
 import "./App.css";
 
@@ -69,7 +74,9 @@ export default function App() {
   const [pendingText, setPendingText] = useState("");
   const [duration, setDuration] = useState<Duration | null>(null);
   const [severity, setSeverity] = useState<Severity | null>(null);
-  const [redFlags, setRedFlags] = useState<boolean | null>(null);
+  const [trajectory, setTrajectory] = useState<Trajectory | null>(null);
+  const [affectsDailyLife, setAffectsDailyLife] = useState<boolean | null>(null);
+  const [redFlags, setRedFlags] = useState<string[]>([]);
   const [result, setResult] = useState<TriageResult | null>(null);
   const [resultKey, setResultKey] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -85,7 +92,13 @@ export default function App() {
   const resetClarifyForm = () => {
     setDuration(null);
     setSeverity(null);
-    setRedFlags(null);
+    setTrajectory(null);
+    setAffectsDailyLife(null);
+    setRedFlags([]);
+  };
+
+  const toggleRedFlag = (value: string) => {
+    setRedFlags((prev) => (prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]));
   };
 
   const onSubmit = async (e: React.FormEvent) => {
@@ -117,23 +130,29 @@ export default function App() {
     }
   };
 
+  const clarifyIncomplete =
+    duration == null || severity == null || trajectory == null || affectsDailyLife == null;
+
   const onClarifySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (duration == null || severity == null || redFlags == null) return;
+    if (clarifyIncomplete || duration == null || severity == null || trajectory == null || affectsDailyLife == null) {
+      return;
+    }
     setPhase("loading");
     setError(null);
     try {
-      if (redFlags) {
+      if (redFlags.length > 0) {
+        const flags = redFlagLabels(redFlags).join(", ");
         setResult({
           label: "emergency",
           confidence: 1,
           source: "safety_override",
           latencyMs: 0,
-          explanation:
-            "Trouble breathing, chest pain, confusion, or heavy bleeding always routes straight to emergency — that check runs regardless of what the model thinks.",
+          explanation: `You flagged: ${flags}. Any one of these always routes straight to emergency — that check runs regardless of what the model thinks.`,
         });
       } else {
-        const enriched = buildEnrichedText(pendingText, duration, severity);
+        const answers: ClarifyAnswers = { duration, severity, trajectory, affectsDailyLife, redFlags };
+        const enriched = buildEnrichedText(pendingText, answers);
         const r = await triage(enriched);
         setResult(r);
       }
@@ -186,7 +205,7 @@ export default function App() {
       {phase === "clarifying" && (
         <form onSubmit={onClarifySubmit} className="clarify">
           <p className="clarify-intro">
-            That could be a few different things — a couple quick questions before I say anything:
+            That could be a few different things — a few quick questions before I say anything:
           </p>
           <p className="clarify-safety">
             If this is a real emergency, don't wait for this — call your local emergency number now.
@@ -235,27 +254,59 @@ export default function App() {
           </fieldset>
 
           <fieldset className="clarify-group">
-            <legend>Any trouble breathing, chest pain, confusion, or heavy bleeding?</legend>
+            <legend>Is it getting better, worse, or staying the same?</legend>
+            <div className="pill-row">
+              {TRAJECTORY_OPTIONS.map((opt) => (
+                <button
+                  type="button"
+                  key={opt.value}
+                  className={`pill ${trajectory === opt.value ? "pill--selected" : ""}`}
+                  onClick={() => setTrajectory(opt.value)}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </fieldset>
+
+          <fieldset className="clarify-group">
+            <legend>Is it stopping you from doing normal daily activities?</legend>
             <div className="pill-row">
               <button
                 type="button"
-                className={`pill ${redFlags === true ? "pill--selected pill--danger" : ""}`}
-                onClick={() => setRedFlags(true)}
+                className={`pill ${affectsDailyLife === true ? "pill--selected" : ""}`}
+                onClick={() => setAffectsDailyLife(true)}
               >
                 Yes
               </button>
               <button
                 type="button"
-                className={`pill ${redFlags === false ? "pill--selected" : ""}`}
-                onClick={() => setRedFlags(false)}
+                className={`pill ${affectsDailyLife === false ? "pill--selected" : ""}`}
+                onClick={() => setAffectsDailyLife(false)}
               >
                 No
               </button>
             </div>
           </fieldset>
 
+          <fieldset className="clarify-group">
+            <legend>Any of these? Select all that apply.</legend>
+            <div className="pill-row">
+              {RED_FLAG_OPTIONS.map((opt) => (
+                <button
+                  type="button"
+                  key={opt.value}
+                  className={`pill ${redFlags.includes(opt.value) ? "pill--selected pill--danger" : ""}`}
+                  onClick={() => toggleRedFlag(opt.value)}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </fieldset>
+
           <div className="form-actions">
-            <button type="submit" disabled={duration == null || severity == null || redFlags == null || loading}>
+            <button type="submit" disabled={clarifyIncomplete || loading}>
               {loading && <span className="spinner" aria-hidden="true" />}
               {loading ? "Analyzing…" : "Continue"}
             </button>
