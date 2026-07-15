@@ -83,6 +83,16 @@ softmax confidence — is out of scope here, but "confidence thresholds need
 calibration data to mean anything" is the actual lesson this project
 surfaces, and it only showed up once a harder eval set existed.
 
+This is also why the UI doesn't show a confidence percentage next to the
+result. `CONFIDENCE_THRESHOLD` is real and load-bearing internally — it's
+what the *routing* decision is made from — but surfacing it to the user as
+"97%" would present a number we've just shown isn't a calibrated
+probability as if it were one, and for a `safety_override` result the
+"confidence" field is a hardcoded `1`, not a model output at all. What's
+shown instead is *how* the result was reached (on-device directly / LLM
+double-check / fixed safety rule) — true and checkable, unlike a score that
+looks precise but isn't. See `SOURCE_EXPLANATION` in `web/src/App.tsx`.
+
 ## Why clarifying questions instead of an instant verdict
 
 Early versions of this app showed a result the instant the on-device model

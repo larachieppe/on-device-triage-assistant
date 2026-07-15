@@ -40,6 +40,18 @@ const SOURCE_LABEL: Record<string, string> = {
   safety_override: "Safety rule",
 };
 
+// What's shown instead of a numeric confidence score. The model's raw
+// softmax number isn't a calibrated probability — ml/eval.py's hard eval set
+// shows the >=95% confidence bucket is only ~77% accurate in practice — so a
+// specific percentage next to a result claims more certainty than the
+// system actually has. This says how the answer was reached instead, which
+// is true and checkable, rather than a number that looks precise but isn't.
+const SOURCE_EXPLANATION: Record<string, string> = {
+  on_device: "The on-device model was confident enough to answer directly, no server call needed.",
+  llm_fallback: "The on-device model wasn't confident enough on its own, so Claude double-checked it.",
+  safety_override: "This didn't involve the model — it matched a fixed safety rule based on what you flagged.",
+};
+
 function StatusChip({ label }: { label: string }) {
   const meta = STATUS[label];
   if (!meta) return null;
@@ -48,21 +60,6 @@ function StatusChip({ label }: { label: string }) {
     <span className={`status-chip status-chip--ink-${meta.ink}`} style={{ background: `var(${meta.colorVar})` }}>
       <Icon />
     </span>
-  );
-}
-
-function ConfidenceMeter({ value, label }: { value: number; label: string }) {
-  const meta = STATUS[label];
-  const pct = Math.round(value * 100);
-  const fill = meta ? `var(${meta.colorVar})` : "var(--text-h)";
-  const track = meta ? `var(${meta.washVar})` : "var(--border)";
-  return (
-    <div className="meter">
-      <div className="meter-track" style={{ background: track }}>
-        <div className="meter-fill" style={{ width: `${Math.max(pct, 3)}%`, background: fill }} />
-      </div>
-      <span className="meter-value">{pct}%</span>
-    </div>
   );
 }
 
@@ -336,13 +333,14 @@ export default function App() {
             {result.explanation ?? LABEL_DESCRIPTIONS[result.label] ?? ""}
           </p>
 
-          <ConfidenceMeter value={result.confidence} label={result.label} />
+          <p className="result-basis">
+            {SOURCE_EXPLANATION[result.source] ?? ""}
+          </p>
 
           {result.onDeviceLatencyMs != null && (
             <p className="result-detail">
-              On-device pass: {result.onDeviceLatencyMs}ms at{" "}
-              {Math.round((result.onDeviceConfidence ?? 0) * 100)}% confidence — verified via LLM
-              since that was below the trust threshold.
+              On-device pass: {result.onDeviceLatencyMs}ms — not confident enough on its own, so
+              Claude was asked to double-check.
             </p>
           )}
         </div>

@@ -188,28 +188,10 @@ textarea:focus-visible {
   color: var(--text-h);
 }
 
-.meter {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.meter-track {
-  flex: 1;
-  height: 8px;
-  border-radius: 999px;
-  overflow: hidden;
-}
-.meter-fill {
-  height: 100%;
-  border-radius: 999px;
-  transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.meter-value {
-  font-size: 12px;
-  font-variant-numeric: tabular-nums;
+.result-basis {
+  margin: 0;
+  font-size: 13px;
   color: var(--text);
-  width: 34px;
-  text-align: right;
 }
 
 .result-detail {
