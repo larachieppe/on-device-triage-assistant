@@ -1,7 +1,7 @@
 .warning {
   background: var(--status-warning-wash);
   color: var(--text-h);
-  border-radius: 14px;
+  border-radius: 10px;
   padding: 14px 18px;
   font-size: 14px;
   margin-bottom: 20px;
@@ -23,9 +23,10 @@ textarea {
   font: inherit;
   font-size: 16px;
   padding: 16px;
-  border-radius: 18px;
-  border: 1px solid var(--border);
-  background: var(--bg-raised);
+  border-radius: 12px;
+  border: 1px solid var(--panel-border);
+  background: var(--panel-bg);
+  backdrop-filter: var(--panel-blur);
   color: var(--text-h);
   resize: vertical;
   box-shadow: var(--shadow);
@@ -38,7 +39,7 @@ textarea::placeholder {
 textarea:focus-visible {
   outline: none;
   border-color: var(--accent-border);
-  box-shadow: var(--shadow), 0 0 0 4px var(--accent-bg);
+  box-shadow: var(--shadow), var(--glow), 0 0 0 4px var(--accent-bg);
 }
 
 .form-actions {
@@ -52,30 +53,32 @@ textarea:focus-visible {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 15px;
+  font-family: var(--mono);
+  font-size: 14px;
   font-weight: 600;
+  letter-spacing: 0.02em;
   padding: 13px 28px;
-  border-radius: 999px;
   border: none;
-  background: var(--text-h);
-  color: var(--bg);
+  background: var(--accent);
+  color: #04211d;
   cursor: pointer;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08), 0 10px 24px -10px var(--accent-border);
+  box-shadow: var(--glow), 0 10px 24px -10px var(--accent-border);
   transition: opacity 0.15s ease, transform 0.15s ease;
 }
 .form-actions > button:hover:not(:disabled) {
-  opacity: 0.88;
+  opacity: 0.9;
   transform: translateY(-1px);
 }
 .form-actions > button:disabled {
-  opacity: 0.55;
+  opacity: 0.5;
   box-shadow: none;
   cursor: not-allowed;
   transform: none;
 }
 
 .form-status {
-  font-size: 12px;
+  font-family: var(--mono);
+  font-size: 11.5px;
   color: var(--text);
 }
 
@@ -98,21 +101,22 @@ textarea:focus-visible {
   margin-top: 16px;
   background: var(--status-critical-wash);
   color: var(--text-h);
-  border-radius: 14px;
+  border-radius: 10px;
   padding: 14px 18px;
   font-size: 14px;
 }
 
 .result {
   margin-top: 24px;
-  border: 1px solid var(--border);
-  border-left: 4px solid var(--border);
-  border-radius: 20px;
+  border: 1px solid var(--panel-border);
+  border-left: 3px solid var(--border);
+  border-radius: 14px;
   padding: 24px;
   display: flex;
   flex-direction: column;
   gap: 14px;
-  background: var(--bg-raised);
+  background: var(--panel-bg);
+  backdrop-filter: var(--panel-blur);
   box-shadow: var(--shadow);
   animation: resultEnter 0.32s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -145,7 +149,7 @@ textarea:focus-visible {
   flex-shrink: 0;
   width: 44px;
   height: 44px;
-  border-radius: 14px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -169,9 +173,11 @@ textarea:focus-visible {
 }
 
 .result-source {
-  font-size: 12px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  letter-spacing: 0.01em;
   color: var(--text);
-  margin-top: 2px;
+  margin-top: 3px;
 }
 
 .result-description {
@@ -189,7 +195,8 @@ textarea:focus-visible {
 
 .result-detail {
   margin: 0;
-  font-size: 12px;
+  font-family: var(--mono);
+  font-size: 11.5px;
   color: var(--text);
 }
 
@@ -197,10 +204,11 @@ textarea:focus-visible {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  border: 1px solid var(--border);
-  border-radius: 20px;
+  border: 1px solid var(--panel-border);
+  border-radius: 14px;
   padding: 24px;
-  background: var(--bg-raised);
+  background: var(--panel-bg);
+  backdrop-filter: var(--panel-blur);
   box-shadow: var(--shadow);
   animation: resultEnter 0.24s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -239,8 +247,11 @@ textarea:focus-visible {
 }
 .clarify-group legend {
   padding: 0;
-  font-size: 13px;
+  font-family: var(--mono);
+  font-size: 12px;
   font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
   color: var(--text-h);
 }
 
@@ -254,7 +265,7 @@ textarea:focus-visible {
   font-size: 13px;
   font-weight: 500;
   padding: 9px 18px;
-  border-radius: 999px;
+  border-radius: 8px;
   border: 1px solid var(--border);
   background: var(--bg);
   color: var(--text-h);
@@ -266,13 +277,13 @@ textarea:focus-visible {
   background: var(--accent-bg);
 }
 .pill--selected {
-  border-color: var(--text-h);
-  background: var(--text-h);
-  color: var(--bg);
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #04211d;
 }
 .pill--selected:hover {
-  background: var(--text-h);
-  border-color: var(--text-h);
+  background: var(--accent);
+  border-color: var(--accent);
 }
 .pill--danger.pill--selected {
   border-color: var(--status-critical);

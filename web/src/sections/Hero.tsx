@@ -8,7 +8,7 @@ export default function Hero() {
         and asks before it escalates when it isn't. Portfolio demo only, not medical advice.
       </p>
       <div className="hero-actions">
-        <a href="#try" className="hero-cta">
+        <a href="#try" className="hero-cta hud-cta">
           Try it now
         </a>
         <a href="#how-it-works" className="hero-cta hero-cta--ghost">

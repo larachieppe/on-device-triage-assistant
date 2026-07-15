@@ -1,11 +1,20 @@
 :root {
   --text: #6b6f76;
   --text-h: #14171a;
-  --bg: #fdfcfa;
+  --bg: #fbfaf8;
   --bg-raised: #ffffff;
   --border: #e7e5e0;
   --code-bg: #f2f1ec;
   --shadow: 0 1px 2px rgba(20, 23, 26, 0.04), 0 16px 40px -16px rgba(20, 23, 26, 0.16);
+
+  /* Glass panel — cards in light mode are just a raised opaque surface (glass
+     reads as "dirty white" on a light bg, not futuristic), but the same
+     variable names carry real translucency + blur in dark mode below, so
+     component CSS never has to branch on theme. */
+  --panel-bg: var(--bg-raised);
+  --panel-border: var(--border);
+  --panel-blur: none;
+  --glow: none;
 
   /* Brand accent — a calm teal, deliberately distinct from all four status
      colors below so it never gets mistaken for a severity signal. Used for
@@ -15,7 +24,7 @@
   --accent-border: rgba(13, 148, 136, 0.45);
 
   --sans: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+  --mono: ui-monospace, 'SF Mono', 'JetBrains Mono', Consolas, monospace;
 
   /* Status palette (fixed — not themed, same steps in light/dark; each one
      already clears 3:1 against both this app's surfaces). Maps to triage
@@ -44,17 +53,25 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --text: #9a9fa6;
-    --text-h: #f5f6f7;
-    --bg: #101214;
-    --bg-raised: #17191c;
-    --border: #262a2e;
-    --code-bg: #1c1f22;
-    --shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 20px 48px -16px rgba(0, 0, 0, 0.6);
+    --text: #9099a1;
+    --text-h: #f2f4f5;
+    --bg: #08090b;
+    --bg-raised: #131518;
+    --border: #23262b;
+    --code-bg: #1a1d21;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 24px 56px -20px rgba(0, 0, 0, 0.7);
+
+    /* Real glass in dark mode: translucent panel over the grid texture
+       below, blurred so text stays readable, with a hairline border that
+       reads as a faint glow rather than a hard edge. */
+    --panel-bg: rgba(19, 21, 24, 0.72);
+    --panel-border: rgba(45, 212, 191, 0.16);
+    --panel-blur: blur(16px);
+    --glow: 0 0 0 1px rgba(45, 212, 191, 0.08), 0 0 32px -4px rgba(45, 212, 191, 0.18);
 
     --accent: #2dd4bf;
     --accent-bg: rgba(45, 212, 191, 0.14);
-    --accent-border: rgba(45, 212, 191, 0.4);
+    --accent-border: rgba(45, 212, 191, 0.45);
   }
 }
 
@@ -69,6 +86,20 @@ html {
 body {
   margin: 0;
   overflow-x: hidden;
+  /* Faint dot grid — a blueprint/HUD texture, not decoration for its own
+     sake: this app is presenting itself as a diagnostic instrument, and a
+     flat solid background undercuts that. Invisible in light mode (the dot
+     color is the border token at low opacity, which resolves to nearly
+     nothing against a light surface) so it doesn't fight the "raised card"
+     look there. */
+  background-image: radial-gradient(circle, var(--border) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+@media (prefers-color-scheme: dark) {
+  body {
+    background-image: radial-gradient(circle, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
 }
 
 p {

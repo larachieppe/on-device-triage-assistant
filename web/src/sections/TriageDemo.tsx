@@ -228,7 +228,7 @@ export default function TriageDemo() {
             disabled={loading}
           />
           <div className="form-actions">
-            <button type="submit" disabled={!text.trim() || loading}>
+            <button type="submit" className="hud-cta" disabled={!text.trim() || loading}>
               {loading && <span className="spinner" aria-hidden="true" />}
               {loading ? "Analyzing…" : "Check"}
             </button>
@@ -341,7 +341,7 @@ export default function TriageDemo() {
           </fieldset>
 
           <div className="form-actions">
-            <button type="submit" disabled={clarifyIncomplete || loading}>
+            <button type="submit" className="hud-cta" disabled={clarifyIncomplete || loading}>
               {loading && <span className="spinner" aria-hidden="true" />}
               {loading ? "Analyzing…" : "Continue"}
             </button>
@@ -354,7 +354,7 @@ export default function TriageDemo() {
       {result && phase === "done" && (
         <div
           key={resultKey}
-          className="result"
+          className="result hud-frame"
           style={{ borderLeftColor: meta ? `var(${meta.colorVar})` : "var(--border)" }}
         >
           <div className="result-header">
